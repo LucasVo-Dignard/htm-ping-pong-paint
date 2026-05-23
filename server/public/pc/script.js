@@ -41,7 +41,7 @@ scene.add(floor);
 
 // ── BOARD: bigger and closer so it fills the far end ───────────────────
 let BOARD_Z = -10;
-let BOARD_NEAR = -5;  // near bounce wall Z
+let BOARD_NEAR = 2.5;  // near bounce wall Z
 const BOARD_W = 40;
 const BOARD_H = 28;
 
