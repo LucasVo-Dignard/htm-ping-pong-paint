@@ -1,0 +1,126 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  margin: 0;
+  font-family: 'Syne', sans-serif;
+  background: #000;
+  color: #fff;
+}
+
+body, button, input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 8px 14px;
+  backdrop-filter: blur(14px);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #444;
+  transition: background 0.3s ease;
+}
+
+.dot.connected {
+  background: #1D9E75;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.lead,
+.code-label,
+.form-group label,
+.error,
+h1 {
+  color: #fff;
+}
+
+.lead,
+.code-label {
+  text-align: center;
+}
+
+.code-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.form-group input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  padding: 0 16px;
+  font-family: 'Space Mono', monospace;
+  outline: none;
+}
+
+.form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.32);
+}
+
+.form-group input:focus {
+  border-color: rgba(140, 166, 255, 0.9);
+  box-shadow: 0 0 0 4px rgba(90, 118, 255, 0.18);
+}
+
+.error {
+  margin: -2px 0 0;
+  font-size: 0.9rem;
+}
+
+.hidden {
+  display: none;
+}
+
+.start-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  color: #f7f8ff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.start-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.start-btn:active {
+  transform: scale(0.98);
+}
+
+.start-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
