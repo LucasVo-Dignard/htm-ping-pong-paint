@@ -1,6 +1,8 @@
 const { getRandomInt } = require('./random');
 
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const CODE_LENGTH = 4;
+const MAX_ATTEMPTS = 1000;
 
 function generateCode(length = 4) {
   let code = '';
@@ -17,9 +19,9 @@ function isCodeAvailable(code, existingCodes = []) {
   return !existingCodes.includes(code);
 }
 
-function generateUniqueCode(existingCodes = [], length = 4, maxAttempts = 1000) {
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const code = generateCode(length);
+function generateUniqueCode(existingCodes = []) {
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+    const code = generateCode(CODE_LENGTH);
     if (isCodeAvailable(code, existingCodes)) {
       return code;
     }
