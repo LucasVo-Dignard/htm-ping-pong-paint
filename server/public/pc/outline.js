@@ -5,6 +5,7 @@ const codeBlock = document.getElementById('code-block');
 const startBtn = document.getElementById('start-btn');
 
 socket.on('code', (code) => {
+  if (!codeBlock) return;
   codeBlock.innerHTML = code.split('').map(c => `<div class="code-char">${c}</div>`).join('');
  });
 
