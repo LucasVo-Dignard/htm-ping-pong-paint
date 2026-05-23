@@ -1,7 +1,7 @@
 
 // Three.js Scene Setup
 let scene = new THREE.Scene();
-scene.background = new THREE.Color(0xffffff);
+scene.background = new THREE.Color(0xF5F0E8);
 
 // ── CAMERA: wider FOV + much closer to the action ──────────────────────
 let camera = new THREE.PerspectiveCamera(
@@ -10,8 +10,8 @@ let camera = new THREE.PerspectiveCamera(
     0.1,
     1000
 );
-camera.position.set(0, 1.2, 3);           // eye-level, right at the near end
-camera.lookAt(0, 1.5, -12);               // look toward the board
+camera.position.set(0, 10, 3);
+camera.lookAt(0, 10, -14);
 
 let renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -27,12 +27,20 @@ directionalLight.position.set(10, 15, 10);
 scene.add(directionalLight);
 
 // Grid
-let gridHelper = new THREE.GridHelper(50, 50, 0x444444, 0x222222);
+let gridHelper = new THREE.GridHelper(50, 50, 0x8B7355, 0x8B7355);
 gridHelper.position.z = -10;
 scene.add(gridHelper);
 
+// Floor
+let floorGeometry = new THREE.PlaneGeometry(50, 50);
+let floorMaterial = new THREE.MeshStandardMaterial({ color: 0xA73F2A });
+let floor = new THREE.Mesh(floorGeometry, floorMaterial);
+floor.rotation.x = -Math.PI / 2; // rotate flat
+floor.position.set(0, 0, -10);   // match gridHelper position
+scene.add(floor);
+
 // ── BOARD: bigger and closer so it fills the far end ───────────────────
-let BOARD_Z = -14;
+let BOARD_Z = -10;
 let BOARD_NEAR = -5;  // near bounce wall Z
 const BOARD_W = 40;
 const BOARD_H = 28;
@@ -74,7 +82,7 @@ function updateBoard() {
 // Ball
 let ballGeometry = new THREE.SphereGeometry(0.2, 32, 32);
 let ballMaterial = new THREE.MeshStandardMaterial({
-    color: 0xff6b35,
+    color: 0x000000,
     metalness: 0.3,
     roughness: 0.4,
     emissive: 0xff4500,
@@ -85,7 +93,7 @@ scene.add(ballMesh);
 
 // Physics simulation (simplified)
 let ballPhysics = {
-    pos: new THREE.Vector3(0, 1, BOARD_NEAR),
+    pos: new THREE.Vector3(0, 10, BOARD_NEAR),
     vel: new THREE.Vector3(0, 0, 0),
     radius: 0.2,
     gravity: 0.08,
@@ -127,7 +135,7 @@ function queueInput() {
 }
 
 function resetScene() {
-    ballPhysics.pos.set(0, 1, BOARD_NEAR);
+    ballPhysics.pos.set(0, 10, BOARD_NEAR);
     ballPhysics.vel.set(0, 0, 0);
     isFlying = false;
     queuedInput = null;
