@@ -1,19 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PC Client Page</title>
-  <link rel="stylesheet" href="/styles.css">
+  <meta charset="UTF-8" />
+  <title>Lobby</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=Syne:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="pc/styles.css">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="pc/outline.js" defer></script>
 </head>
 <body>
-  <main id="app" class="page-root">
-    <section class="page-card">
-      <h1>PC Page</h1>
-      <p>This is the desktop entry point for the client-side outline.</p>
-      <p>Use this page to initialize desktop-specific layout, controls, and features.</p>
-    </section>
-  </main>
-  <script src="/client/pc/outline.js"></script>
+  <div class="lobby">
+    <div class="status-pill">
+      <span class="dot" id="dot"></span>
+      <span id="status-text">Connect your mobile device at pingpongpaint.ca/mobile</span>
+    </div>
+
+    <div>
+      <div class="code-block" id="code-block">
+        <div class="code-char">-</div>
+        <div class="code-char">-</div>
+        <div class="code-char">-</div>
+        <div class="code-char">-</div>
+      </div>
+      <p class="code-label">Room code</p>
+    </div>
+
+    <button class="start-btn" id="start-btn" disabled>Start game</button>
+  </div>
 </body>
 </html>
