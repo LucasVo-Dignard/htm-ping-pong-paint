@@ -5,12 +5,12 @@ scene.background = new THREE.Color(0xF5F0E8);
 
 // ── CAMERA: wider FOV + much closer to the action ──────────────────────
 let camera = new THREE.PerspectiveCamera(
-    95,                                    // wider FOV for immersive feel
+    70,                            // wider FOV for immersive feel
     window.innerWidth / window.innerHeight,
     0.1,
     1000
 );
-camera.position.set(0, 10, 3);
+camera.position.set(0, 10, 5);
 camera.lookAt(0, 10, -14);
 
 const canvas = document.getElementById('canvas');
@@ -43,7 +43,7 @@ scene.add(floor);
 let BOARD_Z = -10;
 let BOARD_NEAR = 2.5;  // near bounce wall Z
 const BOARD_W = 40;
-const BOARD_H = 28;
+const BOARD_H = 22;
 
 // Create a canvas texture for the board
 const boardTextureCanvas = document.createElement('canvas');
@@ -115,8 +115,8 @@ let ballPhysics = {
     pos: new THREE.Vector3(0, 10, BOARD_NEAR),
     vel: new THREE.Vector3(0, 0, 0),
     radius: 0.2,
-    gravity: 0.08,
-    damping: 0.995,
+    gravity: 0.003,
+    damping: 0.999,
     bounceDamping: 0.85
 };
 
@@ -204,33 +204,33 @@ function drawSplashOnBoard(ballPos) {
     boardCanvasTexture.needsUpdate = true;
 }
 
-function updatePhysics() {
+function updatePhysics(delta) {
     if (!isFlying) return;
 
+    const t = delta * 60; // normalize to 60fps
+
     // Gravity
-    ballPhysics.vel.y -= ballPhysics.gravity;
+    ballPhysics.vel.y -= ballPhysics.gravity * t;
 
     // Damping
-    ballPhysics.vel.multiplyScalar(ballPhysics.damping);
-
-    // Stop if too slow
-    //if (ballPhysics.vel.length() < 0.01) {
-    //    ballPhysics.vel.set(0, 0, 0);
-    //}
+    ballPhysics.vel.multiplyScalar(Math.pow(ballPhysics.damping, t));
 
     // Kill horizontal movement if too slow, but keep gravity
     if (Math.abs(ballPhysics.vel.x) < 0.01) ballPhysics.vel.x = 0;
     if (Math.abs(ballPhysics.vel.z) < 0.01) ballPhysics.vel.z = 0;
-    // Update position
-    ballPhysics.pos.add(ballPhysics.vel);
 
-    // ── Compute visible bounds at ball's current Z so it stays on screen ──
+    // Update position
+    ballPhysics.pos.x += ballPhysics.vel.x * t;
+    ballPhysics.pos.y += ballPhysics.vel.y * t;
+    ballPhysics.pos.z += ballPhysics.vel.z * t;
+
+    // Compute visible bounds at ball's current Z
     const distToCamera = Math.abs(BOARD_Z - CAMERA_Z);
     const halfH = distToCamera * Math.tan((95 / 2) * Math.PI / 180);
     const halfW = halfH * (window.innerWidth / window.innerHeight);
     const r = ballPhysics.radius;
 
-    // Horizontal
+    // Horizontal bounds
     if (ballPhysics.pos.x > halfW - r) {
         ballPhysics.pos.x = halfW - r;
         ballPhysics.vel.x *= -ballPhysics.bounceDamping;
@@ -239,18 +239,21 @@ function updatePhysics() {
         ballPhysics.pos.x = -(halfW - r);
         ballPhysics.vel.x *= -ballPhysics.bounceDamping;
     }
-    // Vertical
-    const camY = 1.2; // camera.position.y
+
+    // Vertical upper bound
+    const camY = 10;
     if (ballPhysics.pos.y > camY + halfH - r) {
         ballPhysics.pos.y = camY + halfH - r;
         ballPhysics.vel.y *= -ballPhysics.bounceDamping;
     }
+
+    // Floor
     if (ballPhysics.pos.y < ballPhysics.radius) {
         ballPhysics.pos.y = ballPhysics.radius;
         ballPhysics.vel.y *= -ballPhysics.bounceDamping;
     }
 
-    // Board collision (at BOARD_Z)
+    // Board collision (far wall)
     if (ballPhysics.pos.z < BOARD_Z) {
         // Only create splash if ball just hit the board (crossed threshold)
         if (lastBoardCollisionZ === null || lastBoardCollisionZ > BOARD_Z) {
@@ -267,29 +270,34 @@ function updatePhysics() {
         lastBoardCollisionZ = null;  // Reset when ball leaves board zone
     }
 
-    // Return to user (near wall)
+    // Near wall
     if (ballPhysics.pos.z > BOARD_NEAR) {
         ballPhysics.pos.z = BOARD_NEAR;
         ballPhysics.vel.z *= -ballPhysics.bounceDamping;
     }
+
     // Ball has come to rest on the floor
     if (ballPhysics.pos.y <= ballPhysics.radius + 0.01 && ballPhysics.vel.length() < 0.05) {
         isFlying = false;
         updateStatus();
     }
-
 }
+
+
+
+const clock = new THREE.Clock();
+
 
 function animate() {
     requestAnimationFrame(animate);
-
-    updatePhysics();
+    const delta = clock.getDelta(); // seconds since last frame
+    updatePhysics(delta);
 
     // Update ball mesh position
     ballMesh.position.copy(ballPhysics.pos);
 
     updateInfo();
-
+    updateBallIndicator();
     renderer.render(scene, camera);
 }
 
@@ -310,38 +318,36 @@ document.addEventListener('keypress', (e) => {
     }
 });
 
-// Handle clicks on the 3D canvas
-document.addEventListener('click', (event) => {
-    // Skip if click originated on UI elements
-    if (event.target.closest('.control-panel') || event.target.closest('.status-panel') || 
-        event.target.closest('.status-bar') || event.target.closest('.ui-container button') ||
-        event.target.tagName === 'INPUT') {
+function updateBallIndicator() {
+    const indicator = document.getElementById('ballIndicator');
+
+    // Project ball 3D position to 2D screen space
+    const pos = ballMesh.position.clone();
+    pos.project(camera);
+
+    const screenX = (pos.x * 0.5 + 0.5) * window.innerWidth;
+    const screenY = (-pos.y * 0.5 + 0.5) * window.innerHeight;
+
+    const margin = 36;
+    const inBounds =
+        screenX >= margin && screenX <= window.innerWidth - margin &&
+        screenY >= margin && screenY <= window.innerHeight - margin &&
+        pos.z <= 1; // in front of camera
+
+    if (!isFlying || inBounds) {
+        indicator.style.display = 'none';
         return;
     }
 
-    // Get normalized mouse coordinates
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    // Clamp to screen edges
+    const clampedX = Math.max(margin, Math.min(window.innerWidth - margin, screenX));
+    const clampedY = Math.max(margin, Math.min(window.innerHeight - margin, screenY));
 
-    // Raycasting
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObject(board);
+    indicator.style.display = 'flex';
+    indicator.style.left = (clampedX - 18) + 'px';
+    indicator.style.top  = (clampedY - 18) + 'px';
+}
 
-    if (intersects.length > 0) {
-        const intersection = intersects[0];
-        const uv = intersection.uv;
-
-        if (uv) {
-            // Convert UV coords (0-1) to texture pixel coordinates
-            const x = uv.x * boardTextureCanvas.width;
-            const y = (1 - uv.y) * boardTextureCanvas.height; // flip Y for canvas coords
-
-            boardDrawerService.drawSplash(x, y);
-            // Update texture so Three.js renders the changes
-            boardCanvasTexture.needsUpdate = true;
-        }
-    }
-});
 
 // Initialize
 resetScene();
