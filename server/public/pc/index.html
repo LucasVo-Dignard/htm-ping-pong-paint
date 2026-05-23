@@ -1,13 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PC Client Page</title>
+  <meta charset="UTF-8" />
+  <title>Lobby</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=Syne:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <script src="/socket.io/socket.io.js"></script>
   <script src="pc/outline.js"></script>
 </head>
 <body>
+  <div class="lobby">
+    <div class="status-pill">
+      <span class="dot" id="dot"></span>
+      <span id="status-text">Connecting…</span>
+    </div>
 
+    <div>
+      <div class="code-block" id="code-block">
+        <div class="code-char">-</div>
+        <div class="code-char">-</div>
+        <div class="code-char">-</div>
+        <div class="code-char">-</div>
+      </div>
+      <p class="code-label">Room code</p>
+    </div>
+
+    <button class="start-btn" id="start-btn" disabled>Start game</button>
+  </div>
 </body>
 </html>
