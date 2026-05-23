@@ -13,10 +13,10 @@ let camera = new THREE.PerspectiveCamera(
 camera.position.set(0, 10, 3);
 camera.lookAt(0, 10, -14);
 
-let renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+const canvas = document.getElementById('canvas');
+let renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
+renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.shadowMap.enabled = false;
-document.body.appendChild(renderer.domElement);
 
 // Lighting
 let ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -45,9 +45,21 @@ let BOARD_NEAR = 2.5;  // near bounce wall Z
 const BOARD_W = 40;
 const BOARD_H = 28;
 
+// Create a canvas texture for the board
+const boardTextureCanvas = document.createElement('canvas');
+boardTextureCanvas.width = 1600;  // 4x resolution for better clarity
+boardTextureCanvas.height = 1120; // maintains 40:28 ratio
+const boardCtx = boardTextureCanvas.getContext('2d');
+boardCtx.fillStyle = '#f0f0f0';
+boardCtx.fillRect(0, 0, boardTextureCanvas.width, boardTextureCanvas.height);
+
+const boardCanvasTexture = new THREE.CanvasTexture(boardTextureCanvas);
+boardCanvasTexture.magFilter = THREE.LinearFilter;
+boardCanvasTexture.minFilter = THREE.LinearFilter;
+
 let boardGeometry = new THREE.PlaneGeometry(BOARD_W, BOARD_H);
 let boardMaterial = new THREE.MeshStandardMaterial({
-    color: 0xf0f0f0,
+    map: boardCanvasTexture,
     metalness: 0.1,
     roughness: 0.2
 });
@@ -91,6 +103,13 @@ let ballMaterial = new THREE.MeshStandardMaterial({
 let ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
 scene.add(ballMesh);
 
+// ── RAYCASTING for board clicks ──────────────────────────────────────────
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+// Create drawer service for the board texture
+const boardDrawerService = new InkDrawerService(boardTextureCanvas);
+
 // Physics simulation (simplified)
 let ballPhysics = {
     pos: new THREE.Vector3(0, 10, BOARD_NEAR),
@@ -103,11 +122,12 @@ let ballPhysics = {
 
 let isFlying = false;
 let queuedInput = null;
+let lastBoardCollisionZ = null;  // Track last collision to avoid duplicate splashes
 
 function launchBall() {
     if (isFlying && !queuedInput) {
         queueInput();
-        return; S
+        return;
     }
 
     if (isFlying) return;
@@ -163,6 +183,27 @@ function updateInfo() {
     document.getElementById('infoY').textContent = ballPhysics.pos.y.toFixed(2);
 }
 
+function drawSplashOnBoard(ballPos) {
+    // Convert ball's world position to board's local coordinates
+    const boardCenterY = BOARD_H / 2 - 4;
+    const localX = ballPos.x;
+    const localY = ballPos.y - boardCenterY;
+
+    // Convert local coords to UV (0-1 range)
+    const uvX = (localX + BOARD_W / 2) / BOARD_W;
+    const uvY = (localY + BOARD_H / 2) / BOARD_H;
+
+    // Clamp to valid range
+    if (uvX < 0 || uvX > 1 || uvY < 0 || uvY > 1) return;
+
+    // Convert UV to texture pixel coordinates
+    const pixelX = uvX * boardTextureCanvas.width;
+    const pixelY = (1 - uvY) * boardTextureCanvas.height; // flip Y for canvas coords
+
+    boardDrawerService.drawSplash(pixelX, pixelY);
+    boardCanvasTexture.needsUpdate = true;
+}
+
 function updatePhysics() {
     if (!isFlying) return;
 
@@ -184,7 +225,7 @@ function updatePhysics() {
     ballPhysics.pos.add(ballPhysics.vel);
 
     // ── Compute visible bounds at ball's current Z so it stays on screen ──
-    const distToCamera = Math.abs(ballPhysics.pos.z - CAMERA_Z);
+    const distToCamera = Math.abs(BOARD_Z - CAMERA_Z);
     const halfH = distToCamera * Math.tan((95 / 2) * Math.PI / 180);
     const halfW = halfH * (window.innerWidth / window.innerHeight);
     const r = ballPhysics.radius;
@@ -211,8 +252,19 @@ function updatePhysics() {
 
     // Board collision (at BOARD_Z)
     if (ballPhysics.pos.z < BOARD_Z) {
+        // Only create splash if ball just hit the board (crossed threshold)
+        if (lastBoardCollisionZ === null || lastBoardCollisionZ > BOARD_Z) {
+            drawSplashOnBoard(ballPhysics.pos);
+            // Play metallic sound on impact
+            const impactSpeed = Math.abs(ballPhysics.vel.z);
+            const frequency = 400 + Math.min(impactSpeed * 200, 400); // Higher speed = higher pitch
+            playMetalSound(frequency);
+        }
+        lastBoardCollisionZ = ballPhysics.pos.z;
         ballPhysics.pos.z = BOARD_Z;
         ballPhysics.vel.z *= -ballPhysics.bounceDamping;
+    } else {
+        lastBoardCollisionZ = null;  // Reset when ball leaves board zone
     }
 
     // Return to user (near wall)
@@ -255,6 +307,39 @@ document.addEventListener('keypress', (e) => {
     } else if (e.key === ' ') {
         e.preventDefault();
         launchBall();
+    }
+});
+
+// Handle clicks on the 3D canvas
+document.addEventListener('click', (event) => {
+    // Skip if click originated on UI elements
+    if (event.target.closest('.control-panel') || event.target.closest('.status-panel') || 
+        event.target.closest('.status-bar') || event.target.closest('.ui-container button') ||
+        event.target.tagName === 'INPUT') {
+        return;
+    }
+
+    // Get normalized mouse coordinates
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    // Raycasting
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObject(board);
+
+    if (intersects.length > 0) {
+        const intersection = intersects[0];
+        const uv = intersection.uv;
+
+        if (uv) {
+            // Convert UV coords (0-1) to texture pixel coordinates
+            const x = uv.x * boardTextureCanvas.width;
+            const y = (1 - uv.y) * boardTextureCanvas.height; // flip Y for canvas coords
+
+            boardDrawerService.drawSplash(x, y);
+            // Update texture so Three.js renders the changes
+            boardCanvasTexture.needsUpdate = true;
+        }
     }
 });
 
