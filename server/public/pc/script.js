@@ -41,7 +41,7 @@ scene.add(floor);
 
 // ── BOARD: bigger and closer so it fills the far end ───────────────────
 let BOARD_Z = -10;
-let BOARD_NEAR = -5;  // near bounce wall Z
+let BOARD_NEAR = 2.5;  // near bounce wall Z
 const BOARD_W = 40;
 const BOARD_H = 28;
 
@@ -107,12 +107,12 @@ let queuedInput = null;
 function launchBall() {
     if (isFlying && !queuedInput) {
         queueInput();
-        return;
+        return; S
     }
 
     if (isFlying) return;
 
-    let speed = parseFloat(document.getElementById('speed').value) || 10;
+    let speed = (parseFloat(document.getElementById('speed').value) || 10) * 0.01;
     let angleX = (parseFloat(document.getElementById('angleX').value) || 0) * Math.PI / 180;
     let angleY = (parseFloat(document.getElementById('angleY').value) || 0) * Math.PI / 180;
 
@@ -173,10 +173,13 @@ function updatePhysics() {
     ballPhysics.vel.multiplyScalar(ballPhysics.damping);
 
     // Stop if too slow
-    if (ballPhysics.vel.length() < 0.01) {
-        ballPhysics.vel.set(0, 0, 0);
-    }
+    //if (ballPhysics.vel.length() < 0.01) {
+    //    ballPhysics.vel.set(0, 0, 0);
+    //}
 
+    // Kill horizontal movement if too slow, but keep gravity
+    if (Math.abs(ballPhysics.vel.x) < 0.01) ballPhysics.vel.x = 0;
+    if (Math.abs(ballPhysics.vel.z) < 0.01) ballPhysics.vel.z = 0;
     // Update position
     ballPhysics.pos.add(ballPhysics.vel);
 
@@ -201,8 +204,8 @@ function updatePhysics() {
         ballPhysics.pos.y = camY + halfH - r;
         ballPhysics.vel.y *= -ballPhysics.bounceDamping;
     }
-    if (ballPhysics.pos.y < camY - halfH + r) {
-        ballPhysics.pos.y = camY - halfH + r;
+    if (ballPhysics.pos.y < ballPhysics.radius) {
+        ballPhysics.pos.y = ballPhysics.radius;
         ballPhysics.vel.y *= -ballPhysics.bounceDamping;
     }
 
@@ -210,27 +213,19 @@ function updatePhysics() {
     if (ballPhysics.pos.z < BOARD_Z) {
         ballPhysics.pos.z = BOARD_Z;
         ballPhysics.vel.z *= -ballPhysics.bounceDamping;
-
-        if (ballPhysics.vel.z > -0.1 && ballPhysics.vel.length() < 2) {
-            if (queuedInput) {
-                setTimeout(launchBall, 400);
-            } else {
-                isFlying = false;
-                updateStatus();
-            }
-        }
     }
 
     // Return to user (near wall)
     if (ballPhysics.pos.z > BOARD_NEAR) {
         ballPhysics.pos.z = BOARD_NEAR;
         ballPhysics.vel.z *= -ballPhysics.bounceDamping;
-
-        if (ballPhysics.vel.length() < 1) {
-            isFlying = false;
-            updateStatus();
-        }
     }
+    // Ball has come to rest on the floor
+    if (ballPhysics.pos.y <= ballPhysics.radius + 0.01 && ballPhysics.vel.length() < 0.05) {
+        isFlying = false;
+        updateStatus();
+    }
+
 }
 
 function animate() {
