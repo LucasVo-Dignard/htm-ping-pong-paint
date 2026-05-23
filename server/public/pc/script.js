@@ -5,12 +5,12 @@ scene.background = new THREE.Color(0xF5F0E8);
 
 // ── CAMERA: wider FOV + much closer to the action ──────────────────────
 let camera = new THREE.PerspectiveCamera(
-    95,                                    // wider FOV for immersive feel
+    85,                                    // wider FOV for immersive feel
     window.innerWidth / window.innerHeight,
     0.1,
     1000
 );
-camera.position.set(0, 10, 3);
+camera.position.set(0, 10, 5);
 camera.lookAt(0, 10, -14);
 
 let renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -43,7 +43,7 @@ scene.add(floor);
 let BOARD_Z = -10;
 let BOARD_NEAR = 2.5;  // near bounce wall Z
 const BOARD_W = 40;
-const BOARD_H = 28;
+const BOARD_H = 25;
 
 let boardGeometry = new THREE.PlaneGeometry(BOARD_W, BOARD_H);
 let boardMaterial = new THREE.MeshStandardMaterial({
@@ -96,8 +96,8 @@ let ballPhysics = {
     pos: new THREE.Vector3(0, 10, BOARD_NEAR),
     vel: new THREE.Vector3(0, 0, 0),
     radius: 0.2,
-    gravity: 0.08,
-    damping: 0.995,
+    gravity: 0.003,
+    damping: 0.999,
     bounceDamping: 0.85
 };
 
@@ -163,33 +163,34 @@ function updateInfo() {
     document.getElementById('infoY').textContent = ballPhysics.pos.y.toFixed(2);
 }
 
-function updatePhysics() {
+
+function updatePhysics(delta) {
     if (!isFlying) return;
 
+    const t = delta * 60; // normalize to 60fps
+
     // Gravity
-    ballPhysics.vel.y -= ballPhysics.gravity;
+    ballPhysics.vel.y -= ballPhysics.gravity * t;
 
     // Damping
-    ballPhysics.vel.multiplyScalar(ballPhysics.damping);
-
-    // Stop if too slow
-    //if (ballPhysics.vel.length() < 0.01) {
-    //    ballPhysics.vel.set(0, 0, 0);
-    //}
+    ballPhysics.vel.multiplyScalar(Math.pow(ballPhysics.damping, t));
 
     // Kill horizontal movement if too slow, but keep gravity
     if (Math.abs(ballPhysics.vel.x) < 0.01) ballPhysics.vel.x = 0;
     if (Math.abs(ballPhysics.vel.z) < 0.01) ballPhysics.vel.z = 0;
-    // Update position
-    ballPhysics.pos.add(ballPhysics.vel);
 
-    // ── Compute visible bounds at ball's current Z so it stays on screen ──
-    const distToCamera = Math.abs(ballPhysics.pos.z - CAMERA_Z);
+    // Update position
+    ballPhysics.pos.x += ballPhysics.vel.x * t;
+    ballPhysics.pos.y += ballPhysics.vel.y * t;
+    ballPhysics.pos.z += ballPhysics.vel.z * t;
+
+    // Compute visible bounds at ball's current Z
+    const distToCamera = Math.abs(BOARD_Z - CAMERA_Z);
     const halfH = distToCamera * Math.tan((95 / 2) * Math.PI / 180);
     const halfW = halfH * (window.innerWidth / window.innerHeight);
     const r = ballPhysics.radius;
 
-    // Horizontal
+    // Horizontal bounds
     if (ballPhysics.pos.x > halfW - r) {
         ballPhysics.pos.x = halfW - r;
         ballPhysics.vel.x *= -ballPhysics.bounceDamping;
@@ -198,46 +199,54 @@ function updatePhysics() {
         ballPhysics.pos.x = -(halfW - r);
         ballPhysics.vel.x *= -ballPhysics.bounceDamping;
     }
-    // Vertical
-    const camY = 1.2; // camera.position.y
+
+    // Vertical upper bound
+    const camY = 10;
     if (ballPhysics.pos.y > camY + halfH - r) {
         ballPhysics.pos.y = camY + halfH - r;
         ballPhysics.vel.y *= -ballPhysics.bounceDamping;
     }
+
+    // Floor
     if (ballPhysics.pos.y < ballPhysics.radius) {
         ballPhysics.pos.y = ballPhysics.radius;
         ballPhysics.vel.y *= -ballPhysics.bounceDamping;
     }
 
-    // Board collision (at BOARD_Z)
+    // Board collision (far wall)
     if (ballPhysics.pos.z < BOARD_Z) {
         ballPhysics.pos.z = BOARD_Z;
         ballPhysics.vel.z *= -ballPhysics.bounceDamping;
     }
 
-    // Return to user (near wall)
+    // Near wall
     if (ballPhysics.pos.z > BOARD_NEAR) {
         ballPhysics.pos.z = BOARD_NEAR;
         ballPhysics.vel.z *= -ballPhysics.bounceDamping;
     }
+
     // Ball has come to rest on the floor
     if (ballPhysics.pos.y <= ballPhysics.radius + 0.01 && ballPhysics.vel.length() < 0.05) {
         isFlying = false;
         updateStatus();
     }
-
 }
+
+
+
+const clock = new THREE.Clock();
+
 
 function animate() {
     requestAnimationFrame(animate);
-
-    updatePhysics();
+    const delta = clock.getDelta(); // seconds since last frame
+    updatePhysics(delta);
 
     // Update ball mesh position
     ballMesh.position.copy(ballPhysics.pos);
 
     updateInfo();
-
+    updateBallIndicator();
     renderer.render(scene, camera);
 }
 
@@ -257,6 +266,37 @@ document.addEventListener('keypress', (e) => {
         launchBall();
     }
 });
+
+function updateBallIndicator() {
+    const indicator = document.getElementById('ballIndicator');
+
+    // Project ball 3D position to 2D screen space
+    const pos = ballMesh.position.clone();
+    pos.project(camera);
+
+    const screenX = (pos.x * 0.5 + 0.5) * window.innerWidth;
+    const screenY = (-pos.y * 0.5 + 0.5) * window.innerHeight;
+
+    const margin = 36;
+    const inBounds =
+        screenX >= margin && screenX <= window.innerWidth - margin &&
+        screenY >= margin && screenY <= window.innerHeight - margin &&
+        pos.z <= 1; // in front of camera
+
+    if (!isFlying || inBounds) {
+        indicator.style.display = 'none';
+        return;
+    }
+
+    // Clamp to screen edges
+    const clampedX = Math.max(margin, Math.min(window.innerWidth - margin, screenX));
+    const clampedY = Math.max(margin, Math.min(window.innerHeight - margin, screenY));
+
+    indicator.style.display = 'flex';
+    indicator.style.left = (clampedX - 18) + 'px';
+    indicator.style.top  = (clampedY - 18) + 'px';
+}
+
 
 // Initialize
 resetScene();
