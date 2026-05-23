@@ -39,6 +39,45 @@ if (codeBlock) {
   codeBlock.addEventListener('click', copyRoomCode);
 }
 
+socket.on('connect', () => {
+  socket.emit('register', 'pc');
+});
+
+// get the connected count element
+const connectedCountNumber = document.getElementById('connected-count-number');
+
+socket.on('mobile_update', (data) => {
+  // Update the UI to show the number of connected mobile clients
+  const count = data && typeof data.count === 'number' ? data.count : 0;
+
+  if (connectedCountNumber) {
+    connectedCountNumber.textContent = String(count);
+  }
+
+  // update dot class to reflect connection state
+  if (dot) {
+    if (count > 0) {
+      dot.classList.add('connected');
+      dot.classList.remove('disconnected');
+    } else {
+      dot.classList.remove('connected');
+      dot.classList.add('disconnected');
+    }
+  }
+
+  // update status text to be informative
+  if (statusText) {
+    statusText.textContent = count > 0
+      ? `${count} device${count === 1 ? '' : 's'} connected`
+      : 'Connect your mobile device(s) at pingpongpaint.ca/mobile';
+  }
+
+  // enable start button when at least one mobile is connected
+  if (startBtn) {
+    startBtn.disabled = !(count > 0);
+  }
+});
+
 socket.on('code', (code) => {
   if (!codeBlock) return;
   currentCode = code;
