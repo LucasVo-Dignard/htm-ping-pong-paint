@@ -4,143 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Ping Pong Paint</title>
-  <style>
-    :root {
-      color-scheme: dark;
-      color: #ffffff;
-      background: #0b1320;
-      font-family: Inter, system-ui, sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      background: linear-gradient(180deg, #07111f 0%, #0f2136 100%);
-    }
-
-    main {
-      width: min(100%, 420px);
-      background: rgba(12, 25, 44, 0.96);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 28px;
-      padding: 28px 24px;
-      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.24);
-    }
-
-    h1 {
-      margin: 0 0 16px;
-      font-size: clamp(2rem, 4vw, 2.8rem);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      text-align: center;
-    }
-
-    p {
-      margin: 0 0 24px;
-      color: #d5e0ff;
-      line-height: 1.6;
-      text-align: center;
-    }
-
-    .form-group {
-      display: grid;
-      gap: 16px;
-    }
-
-    label {
-      font-size: 0.95rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: #94a6ff;
-    }
-
-    .error {
-      margin: 10px 0 0;
-      color: #ff7f7f;
-      font-size: 0.95rem;
-      line-height: 1.4;
-      min-height: 1.3em;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    input[type="text"] {
-      width: 100%;
-      padding: 16px 18px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.04);
-      color: #ffffff;
-      font-size: 1.15rem;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-    }
-
-    input[type="text"]::placeholder {
-      color: rgba(255, 255, 255, 0.46);
-    }
-
-    input[type="text"]:focus {
-      outline: none;
-      border-color: #6fd5ff;
-      box-shadow: 0 0 0 4px rgba(111, 213, 255, 0.12);
-    }
-
-    button {
-      width: 100%;
-      padding: 16px;
-      margin-top: 4px;
-      border: none;
-      border-radius: 16px;
-      background: linear-gradient(135deg, #68d6ff, #4169ff);
-      color: #081127;
-      font-size: 1.05rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 18px 40px rgba(65, 105, 255, 0.25);
-    }
-
-    button:active {
-      transform: translateY(0);
-    }
-
-    .info {
-      margin-top: 16px;
-      font-size: 0.9rem;
-      color: #8fa7ff;
-      text-align: center;
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=Syne:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/mobile/styles.css">
 </head>
 <body>
-  <main>
-    <h1>Ping Pong Paint</h1>
-    <p>Enter a 4-letter room code and tap Join to connect.</p>
+  <div class="lobby">
+    <div class="status-pill">
+      <span class="dot" id="dot"></span>
+      <span id="status-text">Ready</span>
+    </div>
 
-    <form class="form-group" id="join-form" novalidate>
-      <label for="room-code">Room Code</label>
-      <input id="room-code" name="room-code" type="text" maxlength="4" minlength="4" autocomplete="off"
-        pattern="[A-Za-z]{4}" placeholder="ABCD" inputmode="text" required />
-      <p id="error-message" class="error hidden">Enter exactly 4 letters.</p>
-      <button type="submit">Join</button>
-    </form>
+    <div class="mobile-panel">
+      <h1>Ping Pong Paint</h1>
+      <p class="lead">Enter a 4-letter room code and tap Join to connect.</p>
 
-    <p class="info">Only letters are accepted. Example: PLAY</p>
-  </main>
+      <form class="form-group" id="join-form" novalidate>
+        <label for="room-code">Room Code</label>
+        <input id="room-code" name="room-code" type="text" maxlength="4" minlength="4" autocomplete="off"
+          pattern="[A-Za-z]{4}" placeholder="ABCD" inputmode="text" required />
+        <p id="error-message" class="error hidden">Enter exactly 4 letters.</p>
+        <button type="submit" class="start-btn">Join</button>
+      </form>
+
+      <p class="code-label">Only letters are accepted. Example: PLAY</p>
+    </div>
+  </div>
   <script>
     const form = document.getElementById('join-form');
     const roomCodeInput = document.getElementById('room-code');
