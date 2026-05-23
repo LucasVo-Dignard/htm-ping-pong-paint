@@ -5,7 +5,7 @@ scene.background = new THREE.Color(0xF5F0E8);
 
 // ── CAMERA: wider FOV + much closer to the action ──────────────────────
 let camera = new THREE.PerspectiveCamera(
-    85,                                    // wider FOV for immersive feel
+    70,                            // wider FOV for immersive feel
     window.innerWidth / window.innerHeight,
     0.1,
     1000
@@ -43,7 +43,7 @@ scene.add(floor);
 let BOARD_Z = -10;
 let BOARD_NEAR = 2.5;  // near bounce wall Z
 const BOARD_W = 40;
-const BOARD_H = 25;
+const BOARD_H = 22;
 
 let boardGeometry = new THREE.PlaneGeometry(BOARD_W, BOARD_H);
 let boardMaterial = new THREE.MeshStandardMaterial({
