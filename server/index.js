@@ -57,9 +57,19 @@ io.on('connection', (socket) => {
       delete sessions[socket.data.code];
     }
     else if (socket.data.type == "mobile") {
-      const arr = sessions[socket.data.code].mobileSockets;
-      arr.splice(arr.indexOf(socket), 1);
-      sessions[socket.data.code].pcSocket.emit('mobile_update', {count: sessions[code].mobileSockets.length});
+      const session = sessions[socket.data.code];
+      if (!session) {
+        return;
+      }
+
+      const mobileIndex = session.mobileSockets.indexOf(socket);
+      if (mobileIndex !== -1) {
+        session.mobileSockets.splice(mobileIndex, 1);
+      }
+
+      if (session.pcSocket) {
+        session.pcSocket.emit('mobile_update', {count: session.mobileSockets.length});
+      }
     }
   });
 });
