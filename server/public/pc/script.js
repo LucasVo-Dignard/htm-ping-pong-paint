@@ -205,6 +205,11 @@ function drawSplashOnBoard(ballPos) {
 }
 
 function updatePhysics(delta) {
+
+    const IDLE_THRESHOLD = 0.02;
+    const IDLE_RESET_DELAY = 2000;
+    let idleTimer = null;
+
     if (!isFlying) return;
 
     const t = delta * 60; // normalize to 60fps
@@ -224,13 +229,12 @@ function updatePhysics(delta) {
     ballPhysics.pos.y += ballPhysics.vel.y * t;
     ballPhysics.pos.z += ballPhysics.vel.z * t;
 
-    // Compute visible bounds at ball's current Z
-    const distToCamera = Math.abs(BOARD_Z - CAMERA_Z);
-    const halfH = distToCamera * Math.tan((95 / 2) * Math.PI / 180);
-    const halfW = halfH * (window.innerWidth / window.innerHeight);
     const r = ballPhysics.radius;
+    const halfW = BOARD_W / 2;
+    const boardTop = board.position.y + BOARD_H / 2;
+    const boardBottom = board.position.y - BOARD_H / 2;
 
-    // Horizontal bounds
+    // Horizontal bounds (board edges)
     if (ballPhysics.pos.x > halfW - r) {
         ballPhysics.pos.x = halfW - r;
         ballPhysics.vel.x *= -ballPhysics.bounceDamping;
@@ -240,16 +244,15 @@ function updatePhysics(delta) {
         ballPhysics.vel.x *= -ballPhysics.bounceDamping;
     }
 
-    // Vertical upper bound
-    const camY = 10;
-    if (ballPhysics.pos.y > camY + halfH - r) {
-        ballPhysics.pos.y = camY + halfH - r;
+    // Vertical upper bound (top of board)
+    if (ballPhysics.pos.y > boardTop - r) {
+        ballPhysics.pos.y = boardTop - r;
         ballPhysics.vel.y *= -ballPhysics.bounceDamping;
     }
 
     // Floor
-    if (ballPhysics.pos.y < ballPhysics.radius) {
-        ballPhysics.pos.y = ballPhysics.radius;
+    if (ballPhysics.pos.y < r) {
+        ballPhysics.pos.y = r;
         ballPhysics.vel.y *= -ballPhysics.bounceDamping;
     }
 
@@ -276,10 +279,21 @@ function updatePhysics(delta) {
         ballPhysics.vel.z *= -ballPhysics.bounceDamping;
     }
 
-    // Ball has come to rest on the floor
-    if (ballPhysics.pos.y <= ballPhysics.radius + 0.01 && ballPhysics.vel.length() < 0.05) {
-        isFlying = false;
-        updateStatus();
+    if (Math.abs(ballPhysics.vel.x) < IDLE_THRESHOLD &&
+        Math.abs(ballPhysics.vel.y) < IDLE_THRESHOLD &&
+        Math.abs(ballPhysics.vel.z) < IDLE_THRESHOLD) {
+        if (!idleTimer) {
+            idleTimer = setTimeout(() => {
+                resetScene();
+                idleTimer = null;
+            }, IDLE_RESET_DELAY);
+        }
+    } else {
+        // Ball is still moving, cancel any pending reset
+        if (idleTimer) {
+            clearTimeout(idleTimer);
+            idleTimer = null;
+        }
     }
 }
 
@@ -345,7 +359,7 @@ function updateBallIndicator() {
 
     indicator.style.display = 'flex';
     indicator.style.left = (clampedX - 18) + 'px';
-    indicator.style.top  = (clampedY - 18) + 'px';
+    indicator.style.top = (clampedY - 18) + 'px';
 }
 
 
