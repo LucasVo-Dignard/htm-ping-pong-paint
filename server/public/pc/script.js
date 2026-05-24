@@ -131,7 +131,6 @@ function startGame() {
         indicator.classList.add('active');
         indicator.textContent = 'Ready';
     }
-    updateStatus();
 }
 
 // expose startGame globally so other scripts can call it
@@ -219,7 +218,6 @@ function resetScene() {
         indicator.classList.remove('active');
         indicator.textContent = 'Ready';
     }
-    updateStatus();
 }
 
 function drawSplashOnBoard(ballPos) {
