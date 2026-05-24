@@ -185,18 +185,18 @@ function launchBall() {
     ballPhysics.vel.z = -Math.abs(speed * Math.cos(angleX) * horizComponent);
 
     isFlying = true;
-    
+
     let indicator = document.getElementById('queuedIndicator');
     if (indicator) {
         indicator.classList.remove('active');
         indicator.textContent = 'Hit registered!';
-        setTimeout(() => { 
+        setTimeout(() => {
             if (indicator.textContent === 'Hit registered!') {
-                indicator.textContent = 'Ready'; 
+                indicator.textContent = 'Ready';
             }
         }, 1000);
     }
-    
+
     updateStatus();
 }
 
@@ -210,7 +210,7 @@ function resetScene() {
     ballPhysics.vel.set(0, 0, 0);
     isFlying = false;
     ballMesh.visible = true;
-    
+
     if (idleTimer) {
         clearTimeout(idleTimer);
         idleTimer = null;
@@ -260,11 +260,31 @@ function drawSplashOnBoard(ballPos) {
     // Clamp to valid range
     if (uvX < 0 || uvX > 1 || uvY < 0 || uvY > 1) return;
 
-    const splashshRadius = 4;
-    for (let i = 0; i < 5; i++) {
-        const offsetX = (Math.random() - 0.5) * 8;
-        const offsetY = (Math.random() - 0.5) * 8;
-        boardDrawerService.drawSplash(pixelX + offsetX, pixelY + offsetY);
+
+    // Convert UV to texture pixel coordinates
+    const pixelX = uvX * boardTextureCanvas.width;
+    const pixelY = (1 - uvY) * boardTextureCanvas.height; // flip Y for canvas coords
+
+    const splashCount = 5 + Math.floor(Math.random() * 4); // 5-8 splashes per impact
+    const maxRadius = 8 + Math.random() * 12; // Bigger base size
+
+    for (let i = 0; i < splashCount; i++) {
+        // Random offset from impact point
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * 15; // Spread radius
+        const offsetX = Math.cos(angle) * distance;
+        const offsetY = Math.sin(angle) * distance;
+
+        // Random size variation
+        const sizeVariation = 0.4 + Math.random() * 0.6; // 0.4-1.0 multiplier
+        const radius = maxRadius * sizeVariation;
+
+        // Draw splash with variation
+        boardDrawerService.drawSplash(
+            pixelX + offsetX,
+            pixelY + offsetY,
+            radius
+        );
     }
     boardCanvasTexture.needsUpdate = true;
 }
@@ -283,7 +303,7 @@ function updatePhysics(delta) {
 
 
     //Cap speed
-    if(ballPhysics.vel.length() > MAX_SPEED) {
+    if (ballPhysics.vel.length() > MAX_SPEED) {
         ballPhysics.vel.normalize().multiplyScalar(MAX_SPEED);
     }
 
@@ -332,12 +352,12 @@ function updatePhysics(delta) {
             const impactSpeed = Math.abs(ballPhysics.vel.z);
             const frequency = 400 + Math.min(impactSpeed * 200, 400); // Higher speed = higher pitch
             playMetalSound(frequency);
-            
+
             // Disappear the ball and respawn after a short delay
             ballMesh.visible = false;
             isFlying = false;
             ballPhysics.vel.set(0, 0, 0); // Freeze
-            
+
             setTimeout(() => {
                 resetScene();
             }, 250); // 250ms delay before random respawn
@@ -386,30 +406,30 @@ function animate() {
     ballMesh.position.copy(ballPhysics.pos);
 
     // Linear perspective scaling
-    const dist = camera.position.z - ballPhysics.pos.z; 
+    const dist = camera.position.z - ballPhysics.pos.z;
     const refDist = camera.position.z - BOARD_NEAR;
-    
+
     // Scale factor decreases linearly with distance
     const linearScaleFactor = 0.06;
     let scale = 1.0 - ((dist - refDist) * linearScaleFactor);
     if (scale < 0) scale = 0;
-    
+
     ballMesh.scale.setScalar(scale);
 
     // Offset visual mesh to prevent hovering off the ground when scaled down
     ballMesh.position.y -= ballPhysics.radius * (1 - scale);
 
     updateInfo();
-    
+
     // Dual-camera rendering
     renderer.clear(); // Clear color and depth
-    
+
     // 1. Render Layer 1 (Perspective Floor)
     cameraPersp.layers.set(1);
     renderer.render(scene, cameraPersp);
-    
+
     renderer.clearDepth(); // Clear depth buffer so ortho objects render on top
-    
+
     // 2. Render Layer 0 (Orthographic Game Elements)
     camera.layers.set(0);
     renderer.render(scene, camera);
@@ -418,7 +438,7 @@ function animate() {
 // Handle window resize
 window.addEventListener('resize', () => {
     const aspect = window.innerWidth / window.innerHeight;
-    
+
     // Update Orthographic camera
     const frustumSize = 30;
     camera.left = -frustumSize * aspect / 2;
@@ -426,11 +446,11 @@ window.addEventListener('resize', () => {
     camera.top = frustumSize / 2;
     camera.bottom = -frustumSize / 2;
     camera.updateProjectionMatrix();
-    
+
     // Update Perspective camera
     cameraPersp.aspect = aspect;
     cameraPersp.updateProjectionMatrix();
-    
+
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
