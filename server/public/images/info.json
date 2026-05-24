@@ -1,0 +1,58 @@
+{
+    "paintings": [
+        {
+            "paintingName": "Starry Night",
+            "paintingArtist": "Van Gogh",
+            "year": 1889,
+            "src": "01.webp"
+        },
+        {
+            "paintingName": "The Great Wave",
+            "paintingArtist": "Katsushika Hokusai",
+            "year": 1831,
+            "src": "02.webp"
+        },
+        {
+            "paintingName": "The Persistence of Memory",
+            "paintingArtist": "Salvador Dalí",
+            "year": 1931,
+            "src": "03.webp"
+        },
+        {
+            "paintingName": "The Scream",
+            "paintingArtist": "Edvard Munch",
+            "year": 1893,
+            "src": "04.webp"
+        },
+        {
+            "paintingName": "The Birth of Venus",
+            "paintingArtist": "Sandro Botticelli",
+            "year": 1485,
+            "src": "05.webp"
+        },
+        {
+            "paintingName": "Memory of the Garden at Etten",
+            "paintingArtist": "Van Gogh",
+            "year": 1888,
+            "src": "06.webp"
+        },
+        {
+            "paintingName": "Landscape near Collioure",
+            "paintingArtist": "André Derain",
+            "year": 1905,
+            "src": "07.webp"
+        },
+        {
+            "paintingName": "Madame Monet and Her Son",
+            "paintingArtist": "Claude Monet",
+            "year": 1875,
+            "src": "08.webp"
+        },
+        {
+            "paintingName": "Honouring the Sacred",
+            "paintingArtist": "Mark Anthony Jacobson",
+            "year": 2000,
+            "src": "09.webp"
+        }
+    ]
+}
