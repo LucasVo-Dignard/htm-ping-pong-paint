@@ -157,6 +157,10 @@ socket.on('mobile_update', (data) => {
   if (startBtn) {
     startBtn.disabled = !(count > 0);
   }
+
+  if (typeof setBallCount === 'function') {
+    setBallCount(count);
+  }
 });
 
 socket.on('code', (code) => {
