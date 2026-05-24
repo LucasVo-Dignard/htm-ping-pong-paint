@@ -193,8 +193,6 @@ function launchBall() {
             }
         }, 1000);
     }
-
-    updateStatus();
 }
 
 function resetScene() {
