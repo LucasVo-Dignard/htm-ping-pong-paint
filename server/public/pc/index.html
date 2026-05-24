@@ -1,301 +1,337 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>Ping Pong Paint</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=Syne:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/sharedStyles.css">
-  <link rel="stylesheet" href="/pc/styles.css">
-  
-  <!-- Game Styles (Moved from 3d_pingpong_threejs.html) -->
-  <style>
-      #game-container {
-          display: none; /* Hidden by default */
-          font-family: 'Courier New', monospace;
-          background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 100%);
-          color: #fff;
-          overflow: hidden;
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100vh;
-      }
+    <meta charset="UTF-8" />
+    <title>Ping Pong Paint</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=Syne:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/sharedStyles.css">
+    <link rel="stylesheet" href="/pc/styles.css">
 
-      #game-container * {
-          box-sizing: border-box;
-      }
+    <!-- Game Styles (Moved from 3d_pingpong_threejs.html) -->
+    <style>
+        #game-container {
+            display: none;
+            /* Hidden by default */
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 100%);
+            color: #fff;
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+        }
 
-      #canvas {
-          display: block;
-          width: 100%;
-          height: 100vh;
-      }
+        #game-container * {
+            box-sizing: border-box;
+        }
 
-      .ui-container {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          display: flex;
-          justify-content: space-between;
-          padding: 20px;
-          pointer-events: none;
-      }
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100vh;
+        }
 
-      .title {
-          font-size: 24px;
-          font-weight: bold;
-          color: #00ff88;
-          text-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
-          letter-spacing: 2px;
-      }
+        .ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            pointer-events: none;
+        }
 
-      .control-panel {
-          background: rgba(10, 10, 26, 0.95);
-          border: 2px solid #ff00ff;
-          border-radius: 8px;
-          padding: 25px;
-          backdrop-filter: blur(10px);
-          width: 350px;
-          box-shadow: 0 0 30px rgba(255, 0, 255, 0.3);
-          pointer-events: all;
-      }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+            letter-spacing: 2px;
+        }
 
-      .control-panel h2 {
-          color: #ff00ff;
-          margin-bottom: 20px;
-          font-size: 16px;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
-      }
+        .control-panel {
+            background: rgba(10, 10, 26, 0.95);
+            border: 2px solid #ff00ff;
+            border-radius: 8px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            width: 350px;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.3);
+            pointer-events: all;
+        }
 
-      .input-group {
-          margin-bottom: 16px;
-      }
+        .control-panel h2 {
+            color: #ff00ff;
+            margin-bottom: 20px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+        }
 
-      .input-group label {
-          display: block;
-          margin-bottom: 6px;
-          font-size: 11px;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          color: #ff00ff;
-      }
+        .input-group {
+            margin-bottom: 16px;
+        }
 
-      .input-group input {
-          width: 100%;
-          padding: 10px;
-          background: rgba(255, 0, 255, 0.05);
-          border: 1px solid #ff00ff;
-          border-radius: 4px;
-          color: #fff;
-          font-family: 'Courier New', monospace;
-          font-size: 13px;
-          transition: all 0.3s ease;
-      }
+        .input-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #ff00ff;
+        }
 
-      .input-group input:focus {
-          outline: none;
-          background: rgba(255, 0, 255, 0.15);
-          box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
-      }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 0, 255, 0.05);
+            border: 1px solid #ff00ff;
+            border-radius: 4px;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
 
-      .button-group {
-          display: flex;
-          gap: 10px;
-          margin-top: 20px;
-      }
+        .input-group input:focus {
+            outline: none;
+            background: rgba(255, 0, 255, 0.15);
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
+        }
 
-      .game-btn {
-          flex: 1;
-          padding: 11px;
-          background: #ff00ff;
-          color: #0a0a1a;
-          border: none;
-          border-radius: 4px;
-          font-weight: bold;
-          font-family: 'Courier New', monospace;
-          text-transform: uppercase;
-          cursor: pointer;
-          font-size: 11px;
-          letter-spacing: 1px;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 15px rgba(255, 0, 255, 0.3);
-      }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
 
-      .game-btn:hover:not(:disabled) {
-          background: #ff33ff;
-          box-shadow: 0 6px 25px rgba(255, 0, 255, 0.5);
-          transform: translateY(-2px);
-      }
+        .game-btn {
+            flex: 1;
+            padding: 11px;
+            background: #ff00ff;
+            color: #0a0a1a;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-size: 11px;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 0, 255, 0.3);
+        }
 
-      .game-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-      }
+        .game-btn:hover:not(:disabled) {
+            background: #ff33ff;
+            box-shadow: 0 6px 25px rgba(255, 0, 255, 0.5);
+            transform: translateY(-2px);
+        }
 
-      .status-panel {
-          background: rgba(10, 10, 26, 0.95);
-          border: 2px solid #00ff88;
-          border-radius: 8px;
-          padding: 20px;
-          width: 320px;
-          backdrop-filter: blur(10px);
-          box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
-          pointer-events: all;
-          position: absolute;
-          bottom: 20px;
-          right: 20px;
-          margin: 0;
-          z-index: 50;
-      }
+        .game-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
 
-      .status-panel h3 {
-          color: #00ff88;
-          margin-bottom: 15px;
-          font-size: 14px;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-      }
+        .status-panel {
+            background: rgba(10, 10, 26, 0.95);
+            border: 2px solid #00ff88;
+            border-radius: 8px;
+            padding: 20px;
+            width: 320px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+            pointer-events: all;
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            margin: 0;
+            z-index: 50;
+        }
 
-      .info-item {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 10px;
-          font-size: 12px;
-          padding: 8px;
-          background: rgba(0, 255, 136, 0.05);
-          border-radius: 3px;
-      }
+        .status-panel h3 {
+            color: #00ff88;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
 
-      .info-label {
-          color: #00ff88;
-      }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 12px;
+            padding: 8px;
+            background: rgba(0, 255, 136, 0.05);
+            border-radius: 3px;
+        }
 
-      .info-value {
-          color: #ff00ff;
-          font-weight: bold;
-      }
+        .info-label {
+            color: #00ff88;
+        }
 
-      .queued-indicator {
-          background: rgba(0, 255, 136, 0.05);
-          border: 1px solid #00ff88;
-          border-radius: 4px;
-          padding: 12px;
-          margin-top: 15px;
-          text-align: center;
-          font-size: 11px;
-          color: #666;
-      }
+        .info-value {
+            color: #ff00ff;
+            font-weight: bold;
+        }
 
-      .queued-indicator.active {
-          background: rgba(0, 255, 136, 0.15);
-          border-color: #00ff88;
-          color: #00ff88;
-      }
+        .queued-indicator {
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid #00ff88;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+        }
 
-      .bottom-ui {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          display: flex;
-          justify-content: space-between;
-          padding: 20px;
-          pointer-events: none;
-      }
+        .queued-indicator.active {
+            background: rgba(0, 255, 136, 0.15);
+            border-color: #00ff88;
+            color: #00ff88;
+        }
 
-      .status-bar {
-          background: rgba(0, 255, 136, 0.1);
-          border: 1px solid #00ff88;
-          border-radius: 4px;
-          padding: 12px 16px;
-          font-size: 12px;
-          color: #00ff88;
-          text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-          pointer-events: all;
-      }
+        .bottom-ui {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            pointer-events: none;
+        }
 
-      #ink-canvas {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100vh;
-          pointer-events: auto;
-      }
+        .status-bar {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            border-radius: 4px;
+            padding: 12px 16px;
+            font-size: 12px;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            pointer-events: all;
+        }
 
-      @media (max-width: 768px) {
-          .ui-container {
-              flex-direction: column;
-              gap: 10px;
-          }
+        #ink-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            pointer-events: auto;
+        }
 
-          .control-panel,
-          .status-panel {
-              width: 100%;
-              max-width: 90vw;
-          }
+        @media (max-width: 768px) {
+            .ui-container {
+                flex-direction: column;
+                gap: 10px;
+            }
 
-          .title {
-              font-size: 18px;
-          }
-      }
-  </style>
+            .control-panel,
+            .status-panel {
+                width: 100%;
+                max-width: 90vw;
+            }
 
-  <!-- Scripts -->
-  <script src="/socket.io/socket.io.js"></script>
-  
-  <!-- Game Scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="/pc/pixel-convolution-service.js"></script>
-  <script src="/pc/ink-drawer-service.js"></script>
-  <script src="/pc/load-sound.js" defer></script>
-  <script src="/pc/play-sound.js" defer></script>
-  <script src="/pc/metallic-sound.js" defer></script>
-  <script src="/pc/outline.js" defer></script>
-  <script src="/pc/script.js" defer></script>
+            .title {
+                font-size: 18px;
+            }
+        }
+    </style>
+
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Game Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="/pc/pixel-convolution-service.js"></script>
+    <script src="/pc/ink-drawer-service.js"></script>
+    <script src="/pc/load-sound.js" defer></script>
+    <script src="/pc/play-sound.js" defer></script>
+    <script src="/pc/metallic-sound.js" defer></script>
+    <script src="/pc/outline.js" defer></script>
+    <script src="/pc/script.js" defer></script>
 </head>
+
 <body>
 
-  <!-- LOBBY CONTAINER -->
-  <div id="lobby-container" class="lobby">
-    <div class="status-pill">
-      <span class="dot" id="dot"></span>
-      <span id="status-text">Connect your mobile device at pingpongpaint.ca/mobile</span>
+    <!-- LOBBY CONTAINER -->
+    <div id="lobby-container" class="lobby">
+        <div class="status-pill">
+            <span class="dot" id="dot"></span>
+            <span id="status-text">Connect your mobile device at pingpongpaint.ca/mobile</span>
+        </div>
+
+        <p id="connected-count" class="connected-count">Connected devices: <span id="connected-count-number">0</span>
+        </p>
+
+        <div>
+            <div class="code-block" id="code-block">
+                <div class="code-char">-</div>
+                <div class="code-char">-</div>
+                <div class="code-char">-</div>
+                <div class="code-char">-</div>
+            </div>
+            <p class="code-label">Room code</p>
+        </div>
+        <div class="lobby-interactive-section">
+
+            <div class="instruction-side">
+                <h4 class="lang-title">FRANÇAIS</h4>
+                <ul>
+                    <li>Sur votre téléphone, connectez-vous à la page <strong>pingpongpaint.ca/mobile</strong></li>
+                    <li>Entrez le code. En attendant que la partie commence, alignez votre téléphone avec l'ordinateur
+                        (l'écran vers le haut, perpendiculaire à celui de l'ordinateur).</li>
+                    <li>Le jeu vous demandera de considérer votre téléphone comme une raquette de ping-pong (coups
+                        droits, revers...).</li>
+                </ul>
+            </div>
+
+            <div id="canvas-selector" class="canvas-center">
+                <h3>Select a Canvas</h3>
+                <div id="image-grid" class="image-grid">
+                </div>
+            </div>
+
+            <div class="instruction-side">
+                <h4 class="lang-title">ENGLISH</h4>
+                <ul>
+                    <li>On your phone, go to <strong>pingpongpaint.ca/mobile</strong></li>
+                    <li>Enter the code. While waiting for the game to start, align your phone with the computer (the
+                        phone screen should be facing up, perpendicular to the computer screen).</li>
+                    <li>The game will ask you to treat your phone as a ping-pong paddle (forehands, backhands...).</li>
+                </ul>
+            </div>
+
+        </div>
+
+        <!-- Place this section inside your lobby-container -->
+        <div id="canvas-selector">
+            <h3>Select a Canvas</h3>
+            <div id="image-grid" class="image-grid">
+                <!-- Canvas options will be injected dynamically here -->
+            </div>
+        </div>
+
+        <button class="start-btn" id="start-btn" disabled>Start game</button>
     </div>
 
-    <p id="connected-count" class="connected-count">Connected devices: <span id="connected-count-number">0</span></p>
-
-    <div>
-      <div class="code-block" id="code-block">
-        <div class="code-char">-</div>
-        <div class="code-char">-</div>
-        <div class="code-char">-</div>
-        <div class="code-char">-</div>
-      </div>
-      <p class="code-label">Room code</p>
+    <!-- GAME CONTAINER -->
+    <div id="game-container">
+        <canvas id="canvas"></canvas>
     </div>
-
-    <!-- Place this section inside your lobby-container -->
-    <div id="canvas-selector">
-      <h3>Select a Canvas</h3>
-      <div id="image-grid" class="image-grid">
-        <!-- Canvas options will be injected dynamically here -->
-      </div>
-    </div>
-
-    <button class="start-btn" id="start-btn" disabled>Start game</button>
-  </div>
-
-  <!-- GAME CONTAINER -->
-  <div id="game-container">
-      <canvas id="canvas"></canvas>
-  </div>
 
 </body>
+
 </html>
