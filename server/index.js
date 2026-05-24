@@ -8,6 +8,11 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
+const ClientType = Object.freeze({
+  PC: 'pc',
+  MOBILE: 'mobile'
+});
+
 const PORT = 80; // Default HTTP port: 80, Default HTTPS port: 443
 
 const sessions = {}; // { code: {pcSocket: , mobileSockets: } }
@@ -28,16 +33,16 @@ app.get('/mobile', (req, res) => {
 
 io.on('connection', (socket) => {
   socket.on('register', (type) => {
-    if (type == 'pc') {
+    if (type == ClientType.PC) {
       const code = generateUniqueCode(Object.keys(sessions));
       console.log(`New connection — assigned code: ${code}`);
       sessions[code] = {pcSocket: socket, mobileSockets: []};
       socket.data.code = code;
-      socket.data.type = "pc";
+      socket.data.type = ClientType.PC;
       socket.emit('code', code);
     }
-    else if (type == 'mobile') {
-      socket.data.type = "mobile";
+    else if (type == ClientType.MOBILE) {
+      socket.data.type = ClientType.MOBILE;
     }
   });
 
@@ -53,13 +58,23 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    if (socket.data.type == "pc") {
+    if (socket.data.type == ClientType.PC) {
       delete sessions[socket.data.code];
     }
-    else if (socket.data.type == "mobile") {
-      const arr = sessions[socket.data.code].mobileSockets;
-      arr.splice(arr.indexOf(socket), 1);
-      sessions[socket.data.code].pcSocket.emit('mobile_update', {count: sessions[code].mobileSockets.length});
+    else if (socket.data.type == ClientType.MOBILE) {
+      const session = sessions[socket.data.code];
+      if (!session) {
+        return;
+      }
+
+      const mobileIndex = session.mobileSockets.indexOf(socket);
+      if (mobileIndex !== -1) {
+        session.mobileSockets.splice(mobileIndex, 1);
+      }
+
+      if (session.pcSocket) {
+        session.pcSocket.emit('mobile_update', {count: session.mobileSockets.length});
+      }
     }
   });
 });
