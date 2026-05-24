@@ -75,8 +75,8 @@ const wallGradient = wallCtx.createRadialGradient(
     wallTextureCanvas.height * 0.5,
     wallTextureCanvas.width * 0.7
 );
-wallGradient.addColorStop(0, '#fffef3');
-wallGradient.addColorStop(0.45, '#fff6cf');
+wallGradient.addColorStop(0, '#ffffff');
+wallGradient.addColorStop(0.45, '#fff9e0');
 wallGradient.addColorStop(1, '#e8d28a');
 wallCtx.fillStyle = wallGradient;
 wallCtx.fillRect(0, 0, wallTextureCanvas.width, wallTextureCanvas.height);
