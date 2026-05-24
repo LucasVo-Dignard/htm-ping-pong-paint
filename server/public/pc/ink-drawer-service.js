@@ -1,4 +1,6 @@
 const HIT_Y_OFFSET = 0.5;
+const MIN_SPLAT_SIZE = 26;
+const MAX_SPLAT_SIZE = 36;
 
 (function () {
   const DEFAULT_PALETTE = [
@@ -64,11 +66,24 @@ const HIT_Y_OFFSET = 0.5;
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    drawSplash(x, y) {
+    drawSplash(x, y, size) {
       const newY = y + HIT_Y_OFFSET;
       const color = this.activeColor || this._getNextColor();
       const [r, g, b] = hexToRgb(color);
-      const radius = 26 + Math.random() * 10;
+      
+      let radius;
+      if (typeof size === 'number') {
+        // Map linearly from [17.5, 32.5] (expected sizeVariation range from script.js)
+        // to [MIN_SPLAT_SIZE, MAX_SPLAT_SIZE]
+        const minInput = 17.5;
+        const maxInput = 32.5;
+        const t = (size - minInput) / (maxInput - minInput);
+        radius = MIN_SPLAT_SIZE + t * (MAX_SPLAT_SIZE - MIN_SPLAT_SIZE);
+        radius = Math.max(MIN_SPLAT_SIZE, Math.min(MAX_SPLAT_SIZE, radius));
+      } else {
+        radius = MIN_SPLAT_SIZE + Math.random() * (MAX_SPLAT_SIZE - MIN_SPLAT_SIZE);
+      }
+
       this._drawFilaments(x, newY, radius, r, g, b);
       this._drawDroplets(x, newY, radius, 12 + Math.floor(Math.random() * 8), r, g, b);
       this._drawRim(x, newY, radius, r, g, b);
