@@ -88,6 +88,56 @@ socket.on('code', (code) => {
 // statusText.textContent = 'Connected';
 // startBtn.disabled = false;
 
-socket.on('disconnect', () => {
-  console.log("disconnected");
+if (startBtn) {
+  startBtn.addEventListener('click', () => {
+    const lobbyContainer = document.getElementById('lobby-container');
+    const gameContainer = document.getElementById('game-container');
+    
+    if (lobbyContainer && gameContainer) {
+      lobbyContainer.style.display = 'none';
+      gameContainer.style.display = 'block';
+      
+      // Dispatch a resize event to ensure Three.js canvas size is correct 
+      // since it was initialized while display was 'none'
+      window.dispatchEvent(new Event('resize'));
+    }
+  });
+}
+
+socket.on('hit', (hitData) => {
+  console.log('Received hit from mobile:', hitData);
+  
+  if (hitData && hitData.directionVector) {
+    // Map acceleration to speed input (adjust multiplier as needed)
+    const accel = Math.abs(hitData.zAcceleration || 15);
+    const speedInput = document.getElementById('speed');
+    if (speedInput) {
+      // Base speed around 50, scale up based on how hard the swing was over the threshold
+      speedInput.value = Math.min(200, Math.floor(50 + (accel - 15) * 5)); 
+    }
+
+    // Map direction vector to angles
+    const dir = hitData.directionVector;
+    
+    // angleX: Horizontal angle (Rotation around Y axis)
+    // We can use x (East/West) to determine the horizontal angle
+    const angleXInput = document.getElementById('angleX');
+    if (angleXInput) {
+      // Map -1 to 1 (left to right) to roughly -45 to 45 degrees
+      angleXInput.value = Math.floor(dir.x * 45);
+    }
+
+    // angleY: Vertical angle (Rotation around X axis)
+    // We can use z (Up) to determine the vertical angle
+    const angleYInput = document.getElementById('angleY');
+    if (angleYInput) {
+       // Map 0 to 1 (flat to straight up) to 0 to 45 degrees
+      angleYInput.value = Math.floor(dir.z * 45);
+    }
+
+    // Trigger the launch
+    if (typeof launchBall === 'function') {
+      launchBall();
+    }
+  }
 });
