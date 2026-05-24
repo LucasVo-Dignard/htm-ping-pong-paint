@@ -1,3 +1,7 @@
+const SWING_ACCELERATION_THRESHOLD = 16;
+const SWING_RESET_THRESHOLD = SWING_ACCELERATION_THRESHOLD * 0.65;
+const SWING_COOLDOWN_MS = 250;
+
 class SwingDetectonService {
   constructor(options = {}) {
     this.callback = null;
@@ -9,10 +13,6 @@ class SwingDetectonService {
       beta: 0,
       gamma: 0,
     };
-
-    this.swingThreshold = options.swingThreshold ?? 16;
-    this.resetThreshold = options.resetThreshold ?? this.swingThreshold * 0.65;
-    this.cooldownMs = options.cooldownMs ?? 250;
 
     this.onMotion = this.onMotion.bind(this);
     this.onOrientation = this.onOrientation.bind(this);
@@ -109,14 +109,14 @@ class SwingDetectonService {
     const zAcceleration = acceleration.z ?? 0;
     const now = Date.now();
 
-    if (Math.abs(zAcceleration) >= this.swingThreshold && this.isSwingArmed && now - this.lastSwingAt >= this.cooldownMs) {
+    if (Math.abs(zAcceleration) >= SWING_ACCELERATION_THRESHOLD && this.isSwingArmed && now - this.lastSwingAt >= SWING_COOLDOWN_MS) {
       this.isSwingArmed = false;
       this.lastSwingAt = now;
       this.logSwing(zAcceleration);
       return;
     }
 
-    if (Math.abs(zAcceleration) <= this.resetThreshold) {
+    if (Math.abs(zAcceleration) <= SWING_RESET_THRESHOLD) {
       this.isSwingArmed = true;
     }
   }
