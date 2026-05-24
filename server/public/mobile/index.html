@@ -8,6 +8,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=Syne:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/sharedStyles.css">
   <link rel="stylesheet" href="/mobile/styles.css">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/mobile/swing-detection-service.js" defer></script>
+  <script src="/mobile/outline.js" defer></script>
 </head>
 <body>
   <div class="lobby">
@@ -27,16 +30,10 @@
           <label for="code-input">Room Code</label>
           <input id="code-input" name="code" type="text" maxlength="4" minlength="4" autocomplete="off"
             pattern="[A-Za-z]{4}" placeholder="ABCD" inputmode="text" required />
-          <p id="error-message" class="error hidden">Enter exactly 4 letters.</p>
-          <button id="join-btn" type="button" class="join-btn">Join</button>
+          <button id="join-btn" type="button" class="start-btn join-btn">Join</button>
         </div>
-
-        <p class="code-label">Only letters are accepted. Example: PLAY</p>
       </div>
     </div>
   </div>
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/mobile/outline.js" defer></script>
 </body>
 </html>
