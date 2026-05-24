@@ -14,8 +14,8 @@ let camera = new THREE.OrthographicCamera(
     0.1,
     1000
 );
-camera.position.set(0, 4, 5);
-camera.lookAt(0, 4, -14);
+camera.position.set(0, 10, 5);
+camera.lookAt(0, 10, -14);
 
 const canvas = document.getElementById('canvas');
 let renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
@@ -102,7 +102,7 @@ let ballMaterial = new THREE.MeshStandardMaterial({
     metalness: 0.3,
     roughness: 0.4,
     emissive: 0xff4500,
-    emissiveIntensity: 0.1
+    emissiveIntensity: 0.05
 });
 let ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
 scene.add(ballMesh);
