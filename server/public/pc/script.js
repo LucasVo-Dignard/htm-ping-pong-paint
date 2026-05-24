@@ -1,7 +1,6 @@
 
 // Three.js Scene Setup
 let scene = new THREE.Scene();
-scene.background = new THREE.Color(0xF5F0E8);
 
 // ── CAMERA: wider FOV + much closer to the action ──────────────────────
 const aspect = window.innerWidth / window.innerHeight;
@@ -16,17 +15,18 @@ let camera = new THREE.OrthographicCamera(
     0.1,
     1000
 );
-camera.position.set(0, 10, 5);
-camera.lookAt(0, 10, -14);
+camera.position.set(0, 4, 5);
+camera.lookAt(0, 4, -14);
 
 // Perspective camera for the floor (Layer 1)
 let cameraPersp = new THREE.PerspectiveCamera(70, aspect, 0.1, 1000);
-cameraPersp.position.set(0, 10, 5);
+cameraPersp.position.set(0, 4, 5);
 cameraPersp.lookAt(0, 4, -14);
 cameraPersp.layers.set(1);
 
 const canvas = document.getElementById('canvas');
 let renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
+renderer.setClearColor(0xF5F0E8);
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.shadowMap.enabled = false;
 renderer.autoClear = false; // Disable autoClear for dual-camera rendering
@@ -345,7 +345,7 @@ function animate() {
     const refDist = camera.position.z - BOARD_NEAR;
     
     // Scale factor decreases linearly with distance
-    const linearScaleFactor = 0.2;
+    const linearScaleFactor = 0.03;
     let scale = 1.0 - ((dist - refDist) * linearScaleFactor);
     if (scale < 0) scale = 0;
     
