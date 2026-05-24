@@ -57,20 +57,43 @@ body {
 /* Image Selector List */
 .image-grid {
   display: flex;
-  flex-direction: column;
-  /* Stack them vertically */
+  flex-direction: column; 
   gap: 12px;
   margin: 20px 0;
   max-width: 500px;
   max-height: 400px;
-  overflow-y: auto;
-  /* Add vertical scrollbar if the list is long */
-  overflow-x: hidden;
-  /* Prevent horizontal scrolling */
-  padding-right: 10px;
-  /* Give scrollbar some breathing room */
+  overflow-y: auto; 
+  /* We removed overflow-x: hidden; so the shadows don't get sliced off */
+  /* Added padding to give the hover scale and 40px shadow room to breathe */
+  padding: 20px; 
+  box-sizing: border-box; 
 }
 
+.canvas-option img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 20px;
+  flex-shrink: 0; 
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  /* NEW: Establish a base layer so z-index works on hover */
+  position: relative; 
+  z-index: 1; 
+  
+  /* NEW: Optional - makes the image scale to the right instead of overlapping the left edge */
+  transform-origin: center left; 
+}
+
+.canvas-option img:hover {
+  transform: scale(1.25); /* Bumped it to 1.25 to make the effect slightly more noticeable! */
+  
+  /* NEW: Forces the hovered image to pop OVER the text and other rows */
+  z-index: 10; 
+  
+  box-shadow: 0 0 20px rgba(255, 0, 255, 0.5), 0 0 40px rgba(0, 255, 136, 0.3);
+}
 .canvas-option {
   display: flex;
   flex-direction: row;
@@ -88,20 +111,6 @@ body {
   width: 100%;
 }
 
-.canvas-option img {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 4px;
-  margin-right: 20px;
-  flex-shrink: 0;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.canvas-option img:hover {
-  transform: scale(1.15);
-  box-shadow: 0 0 20px rgba(255, 0, 255, 0.5), 0 0 40px rgba(0, 255, 136, 0.3);
-}
 
 .canvas-info {
   display: flex;
