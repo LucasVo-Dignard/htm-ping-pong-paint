@@ -62,6 +62,54 @@ floor.position.set(0, 0, -10);   // match gridHelper position
 floor.layers.set(1); // Set to Layer 1
 scene.add(floor);
 
+// Walls
+const wallTextureCanvas = document.createElement('canvas');
+wallTextureCanvas.width = 512;
+wallTextureCanvas.height = 512;
+const wallCtx = wallTextureCanvas.getContext('2d');
+const wallGradient = wallCtx.createRadialGradient(
+    wallTextureCanvas.width * 0.5,
+    wallTextureCanvas.height * 0.45,
+    wallTextureCanvas.width * 0.08,
+    wallTextureCanvas.width * 0.5,
+    wallTextureCanvas.height * 0.5,
+    wallTextureCanvas.width * 0.7
+);
+wallGradient.addColorStop(0, '#fffef3');
+wallGradient.addColorStop(0.45, '#fff6cf');
+wallGradient.addColorStop(1, '#e8d28a');
+wallCtx.fillStyle = wallGradient;
+wallCtx.fillRect(0, 0, wallTextureCanvas.width, wallTextureCanvas.height);
+
+const wallTexture = new THREE.CanvasTexture(wallTextureCanvas);
+wallTexture.magFilter = THREE.LinearFilter;
+wallTexture.minFilter = THREE.LinearFilter;
+
+const wallMaterial = new THREE.MeshStandardMaterial({
+    map: wallTexture,
+    roughness: 0.9,
+    metalness: 0,
+    side: THREE.DoubleSide
+});
+
+function createWall(width, height, x, y, z, rotationY) {
+    const wall = new THREE.Mesh(new THREE.PlaneGeometry(width, height), wallMaterial);
+    wall.position.set(x, y, z);
+    wall.rotation.y = rotationY;
+    wall.layers.set(1);
+    scene.add(wall);
+    return wall;
+}
+
+const WALL_HEIGHT = 28;
+const WALL_DEPTH = 28;
+const WALL_HALF_WIDTH = 25;
+const WALL_BACK_Z = -24;
+
+createWall(50, WALL_HEIGHT, 0, WALL_HEIGHT / 2, WALL_BACK_Z, 0);
+createWall(WALL_DEPTH, WALL_HEIGHT, -WALL_HALF_WIDTH, WALL_HEIGHT / 2, WALL_BACK_Z + WALL_DEPTH / 2, Math.PI / 2);
+createWall(WALL_DEPTH, WALL_HEIGHT, WALL_HALF_WIDTH, WALL_HEIGHT / 2, WALL_BACK_Z + WALL_DEPTH / 2, -Math.PI / 2);
+
 // ── BOARD: bigger and closer so it fills the far end ───────────────────
 let BOARD_Z = -10;
 let BOARD_NEAR = 2.5;  // near bounce wall Z
