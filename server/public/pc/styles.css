@@ -51,3 +51,53 @@ body {
 }
 
 .start-btn:hover { background: rgba(255, 255, 255, 0.08); }
+
+/* Image Selector List */
+.image-grid {
+  display: flex;
+  flex-direction: column; /* Stack them vertically */
+  gap: 12px;
+  margin: 20px 0;
+  max-width: 500px;
+  max-height: 400px;
+  overflow-y: auto; /* Add scrollbar if the list is long */
+}
+
+.canvas-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 10px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #2a2a2a;
+  color: #fff;
+  transition: transform 0.1s ease, border-color 0.1s ease;
+  text-align: left;
+}
+
+.canvas-option img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 20px;
+}
+
+.canvas-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.canvas-option:hover {
+  transform: scale(1.02);
+}
+
+.canvas-option.selected {
+  border-color: #00ff88;
+  background-color: #1a1a1a;
+}
