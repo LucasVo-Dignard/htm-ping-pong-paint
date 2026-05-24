@@ -27,6 +27,10 @@ app.get('/testBall', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/pc', '3d_pingpong_threejs.html'));
 });
 
+app.get('/testMainPc', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/pc', 'test.html'));
+});
+
 app.get('/mobile', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/mobile', 'index.html'));
 });
