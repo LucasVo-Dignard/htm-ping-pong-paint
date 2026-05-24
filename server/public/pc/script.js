@@ -452,9 +452,12 @@ window.addEventListener('resize', () => {
 
 // Keyboard input
 document.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        launchBall();
+    if (e.key === 'd' || e.key === 'D') {
+        if (!gameStarted) return;
+        const link = document.createElement('a');
+        link.download = 'painting.png';
+        link.href = boardTextureCanvas.toDataURL('image/png');
+        link.click();
     }
 });
 
