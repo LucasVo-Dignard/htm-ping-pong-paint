@@ -95,7 +95,6 @@ body {
   border-radius: 4px;
   margin-right: 20px;
   flex-shrink: 0;
-  /* Prevent the image from squeezing */
   transition: transform 0.3s ease;
 }
 
