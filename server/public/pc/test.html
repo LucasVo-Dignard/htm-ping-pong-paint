@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test — 3D Ping Pong</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=Syne:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/sharedStyles.css">
+  <link rel="stylesheet" href="/pc/styles.css">
+  <!-- Socket client + outline service (shows room code) -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/pc/outline.js" defer></script>
+  <!-- Three.js + other assets used by the demo -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="/mobile/ink-drawer-service.js"></script>
+  <script src="/pc/metallic-sound.js" defer></script>
+  <script src="/pc/script.js" defer></script>
+  <style>
+    html,body { height:100%; }
+    body { margin:0; background: #0a0a1a; color:#fff; font-family: 'Syne', sans-serif; }
+    #canvas { display:block; width:100%; height:100vh; visibility:hidden; }
+    /* Front overlay with room code and start button */
+    #front-overlay {
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      pointer-events:auto;
+    }
+    .overlay-card {
+      background: rgba(10,10,20,0.88);
+      border:1px solid rgba(255,255,255,0.06);
+      padding:28px;
+      border-radius:12px;
+      text-align:center;
+      backdrop-filter: blur(8px);
+    }
+    .code-block { display:flex; gap:6px; justify-content:center; margin-bottom:14px; }
+    .code-char { width:34px; height:46px; background:#111; border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:'Space Mono', monospace; font-size:20px; }
+    .overlay-start { margin-top:8px; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <!-- Reuse the original UI (kept but visually behind the overlay) -->
+  <div class="ui-container" style="pointer-events:none;">
+    <div class="title">3D PING PONG ⚬</div>
+    <div style="pointer-events:auto; position:relative;">
+      <div class="control-panel" style="pointer-events:auto;">
+        <h2>⚙️ Launch</h2>
+        <div class="input-group"><label for="speed">Speed</label><input type="number" id="speed" value="50"></div>
+        <div class="input-group"><label for="angleX">Horizontal Angle (°)</label><input type="number" id="angleX" value="0"></div>
+        <div class="input-group"><label for="angleY">Vertical Angle (°)</label><input type="number" id="angleY" value="5"></div>
+        <div class="button-group">
+          <button id="launchBtn">▶ LAUNCH</button>
+          <button id="resetBtn" onclick="resetScene()">⟲ RESET</button>
+        </div>
+        <div class="queued-indicator" id="queuedIndicator">No input queued</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Front overlay: room code + start -->
+  <div id="front-overlay">
+    <div class="overlay-card">
+      <h1 style="margin:0 0 8px 0;">Room</h1>
+      <div class="code-block" id="code-block">
+        <div class="code-char">-</div>
+        <div class="code-char">-</div>
+        <div class="code-char">-</div>
+        <div class="code-char">-</div>
+      </div>
+      <div id="overlay-status" style="margin-bottom:12px; color:#ccc; font-size:14px;">Waiting for room code…</div>
+      <button id="overlay-start-btn" class="start-btn overlay-start" disabled>Start game</button>
+    </div>
+  </div>
+
+  <script>
+    // When the overlay start button is clicked: show canvas, hide overlay, and trigger launch
+    document.addEventListener('DOMContentLoaded', () => {
+      const overlay = document.getElementById('front-overlay');
+      const startBtn = document.getElementById('overlay-start-btn');
+      const canvas = document.getElementById('canvas');
+      const status = document.getElementById('overlay-status');
+
+      // pc/outline.js will enable/fill the code-block and enable the start button via 'mobile_update' events.
+      // We also listen for the `code` event which pc/outline.js populates into the same `code-block`.
+
+      // Enable UI when a room code is present (pc/outline.js sets the innerHTML of #code-block)
+      const observer = new MutationObserver(() => {
+        const chars = document.querySelectorAll('#code-block .code-char');
+        const text = Array.from(chars).map(c => c.textContent).join('');
+        if (/^[A-Z]{4}$/.test(text)) {
+          status.textContent = 'Room ready — press Start';
+          startBtn.disabled = false;
+        }
+      });
+      observer.observe(document.getElementById('code-block'), { childList: true, subtree: true, characterData: true });
+
+      startBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        // show the canvas and hide overlay
+        canvas.style.visibility = 'visible';
+        overlay.style.display = 'none';
+
+        // Trigger the existing launch button (script.js defines launchBall and uses #launchBtn)
+        const launchBtn = document.getElementById('launchBtn');
+        if (launchBtn) launchBtn.click();
+      });
+    });
+  </script>
+</body>
+</html>
