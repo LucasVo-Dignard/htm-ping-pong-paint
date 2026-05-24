@@ -417,8 +417,6 @@ function animate() {
             ball.mesh.position.y -= ball.physics.radius * (1 - scale);
         });
 
-    updateInfo();
-
     // Dual-camera rendering
     renderer.clear(); // Clear color and depth
 
