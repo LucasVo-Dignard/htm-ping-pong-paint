@@ -75,7 +75,7 @@ body {
   cursor: pointer;
   background-color: #2a2a2a;
   color: #fff;
-  transition: transform 0.1s ease, border-color 0.1s ease;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   text-align: left;
   box-sizing: border-box; /* Ensure padding doesn't push width out of bounds */
   width: 100%;
@@ -88,6 +88,7 @@ body {
   border-radius: 4px;
   margin-right: 20px;
   flex-shrink: 0; /* Prevent the image from squeezing */
+  transition: transform 0.3s ease;
 }
 
 .canvas-info {
@@ -99,7 +100,13 @@ body {
 }
 
 .canvas-option:hover {
-  transform: scale(1.02);
+  transform: scale(1.15);
+  box-shadow: 0 0 20px rgba(255, 0, 255, 0.5), 0 0 40px rgba(0, 255, 136, 0.3);
+  border-color: #ff00ff;
+}
+
+.canvas-option:hover img {
+  transform: scale(1.05);
 }
 
 .canvas-option.selected {
