@@ -4,7 +4,7 @@ const statusText = document.getElementById('status-text');
 const codeBlock = document.getElementById('code-block');
 const startBtn = document.getElementById('start-btn');
 let currentCode = '';
-let selectedCanvasUrl = null; // null represents the blank canvas
+window.selectedCanvasUrl = null; // null represents the blank canvas
 
 async function loadCanvasOptions() {
   const imageGrid = document.getElementById('image-grid');
@@ -17,7 +17,7 @@ async function loadCanvasOptions() {
   blankDiv.addEventListener('click', () => {
     document.querySelectorAll('.canvas-option').forEach(el => el.classList.remove('selected'));
     blankDiv.classList.add('selected');
-    selectedCanvasUrl = null;
+    window.selectedCanvasUrl = null;
   });
   imageGrid.appendChild(blankDiv);
 
@@ -73,7 +73,7 @@ async function loadCanvasOptions() {
       imgDiv.addEventListener('click', () => {
         document.querySelectorAll('.canvas-option').forEach(el => el.classList.remove('selected'));
         imgDiv.classList.add('selected');
-        selectedCanvasUrl = imgUrl;
+        window.selectedCanvasUrl = imgUrl;
       });
       
       imageGrid.appendChild(imgDiv);
