@@ -5,6 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Ping Pong Ball - Three.js Edition</title>
+    <!-- Load Three.js FIRST -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Load ink drawer service -->
+    <script src="mobile/ink-drawer-service.js"></script>
+    <!-- Load metallic sound -->
+    <script src="pc/metallic-sound.js" defer></script>
+    <!-- Then the script -->
+    <script src="pc/script.js" defer></script>
     <style>
         * {
             margin: 0;
@@ -317,16 +325,6 @@
         <div class="status-bar" id="statusBar">Ready • Press LAUNCH to begin</div>
     </div>
 
-
-    <!-- Load Three.js FIRST -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Load ink drawer service -->
-    <script src="../mobile/ink-drawer-service.js"></script>
-    <!-- Load metallic sound -->
-    <script src="./metallic-sound.js"></script>
-    <!-- Then the script -->
-    <script src="./script.js"></script>
-
     <div id="ballIndicator" style="
     display: none;
     position: fixed;
@@ -354,6 +352,6 @@
         border-left: 8px solid transparent;
         border-right: 8px solid transparent;
         border-top: 12px solid rgb(255, 255, 255);"></div>
-</div>
-
+    </div>
+</body>
 </html>
