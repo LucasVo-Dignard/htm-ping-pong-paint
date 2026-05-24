@@ -87,6 +87,29 @@ io.on('connection', (socket) => {
       session.pcSocket.emit('hit', hitData);
     }
   });
+
+  socket.on('material_select', (data) => {
+    const code = socket.data.code;
+    if (!code || !sessions[code]) {
+      console.warn('Material select received from socket with no valid session');
+      return;
+    }
+
+    const session = sessions[code];
+    console.log(`Material selected: ${data.material} from mobile client`);
+
+    // Send to PC
+    if (session.pcSocket) {
+      session.pcSocket.emit('material_select', data);
+    }
+
+    // Broadcast to all other mobile clients in the room
+    session.mobileSockets.forEach((mobileSocket) => {
+      if (mobileSocket !== socket) {
+        mobileSocket.emit('material_selected_by_peer', data);
+      }
+    });
+  });
 });
 
 httpServer.listen(PORT, () => {

@@ -327,10 +327,19 @@ function updatePhysics(delta) {
         // Only create splash if ball just hit the board (crossed threshold)
         if (lastBoardCollisionZ === null || lastBoardCollisionZ > BOARD_Z) {
             drawSplashOnBoard(ballPhysics.pos);
-            // Play metallic sound on impact
+            // Play impact sound based on selected material
             const impactSpeed = Math.abs(ballPhysics.vel.z);
-            const frequency = 400 + Math.min(impactSpeed * 200, 400); // Higher speed = higher pitch
-            playMetalSound(frequency);
+            const material = window.selectedMaterial || 'metal';
+            if (material === 'wood' && window.woodBuffer && typeof window.playSoundWithPitch === 'function') {
+                const pitch = 0.8 + Math.min(impactSpeed * 0.4, 0.8);
+                window.playSoundWithPitch(window.woodBuffer, pitch);
+            } else if (material === 'plastic' && window.plasticBuffer && typeof window.playSoundWithPitch === 'function') {
+                const pitch = 0.8 + Math.min(impactSpeed * 0.4, 0.8);
+                window.playSoundWithPitch(window.plasticBuffer, pitch);
+            } else {
+                const frequency = 400 + Math.min(impactSpeed * 200, 400);
+                window.playMetalSound(frequency);
+            }
             
             // Disappear the ball and respawn after a short delay
             ballMesh.visible = false;
