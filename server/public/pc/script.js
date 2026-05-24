@@ -260,11 +260,12 @@ function drawSplashOnBoard(ballPos) {
     // Clamp to valid range
     if (uvX < 0 || uvX > 1 || uvY < 0 || uvY > 1) return;
 
-    // Convert UV to texture pixel coordinates
-    const pixelX = uvX * boardTextureCanvas.width;
-    const pixelY = (1 - uvY) * boardTextureCanvas.height; // flip Y for canvas coords
-
-    boardDrawerService.drawSplash(pixelX, pixelY);
+    const splashshRadius = 4;
+    for (let i = 0; i < 5; i++) {
+        const offsetX = (Math.random() - 0.5) * 8;
+        const offsetY = (Math.random() - 0.5) * 8;
+        boardDrawerService.drawSplash(pixelX + offsetX, pixelY + offsetY);
+    }
     boardCanvasTexture.needsUpdate = true;
 }
 
