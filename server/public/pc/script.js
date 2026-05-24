@@ -60,12 +60,12 @@ scene.add(floor);
 let BOARD_Z = -10;
 let BOARD_NEAR = 2.5;  // near bounce wall Z
 const BOARD_W = 40;
-const BOARD_H = 28;
+const BOARD_H = 25;
 
 // Create a canvas texture for the board
 const boardTextureCanvas = document.createElement('canvas');
 boardTextureCanvas.width = 1600;  // 4x resolution for better clarity
-boardTextureCanvas.height = 1120; // maintains 40:28 ratio
+boardTextureCanvas.height = 1000; // maintains 40:25 ratio
 const boardCtx = boardTextureCanvas.getContext('2d');
 boardCtx.fillStyle = '#f0f0f0';
 boardCtx.fillRect(0, 0, boardTextureCanvas.width, boardTextureCanvas.height);
@@ -148,6 +148,31 @@ let isFlying = false;
 const HITTING_ZONE_DEPTH = 3.0;
 let lastBoardCollisionZ = null;  // Track last collision to avoid duplicate splashes
 
+// Swing variables
+let currentSwingSpeed = 50;
+let currentSwingAngleX = 0;
+let currentSwingAngleY = 5;
+
+function updateSwing(speed, angleX, angleY) {
+    if (speed !== undefined) currentSwingSpeed = speed;
+    if (angleX !== undefined) currentSwingAngleX = angleX;
+    if (angleY !== undefined) currentSwingAngleY = angleY;
+    
+    const speedInput = document.getElementById('speed');
+    if (speedInput) speedInput.value = currentSwingSpeed;
+    
+    const angleXInput = document.getElementById('angleX');
+    if (angleXInput) angleXInput.value = currentSwingAngleX;
+    
+    const angleYInput = document.getElementById('angleY');
+    if (angleYInput) angleYInput.value = currentSwingAngleY;
+}
+
+// Update variables if user types into the inputs
+document.getElementById('speed')?.addEventListener('input', (e) => currentSwingSpeed = parseFloat(e.target.value) || 0);
+document.getElementById('angleX')?.addEventListener('input', (e) => currentSwingAngleX = parseFloat(e.target.value) || 0);
+document.getElementById('angleY')?.addEventListener('input', (e) => currentSwingAngleY = parseFloat(e.target.value) || 0);
+
 function launchBall() {
     // Prevent launching if ball is currently hidden (respawning)
     if (!ballMesh.visible) return;
@@ -157,9 +182,9 @@ function launchBall() {
         return;
     }
 
-    let speed = (parseFloat(document.getElementById('speed').value) || 10) * ballPhysics.swingAccelerationScale;
-    let angleX = (parseFloat(document.getElementById('angleX').value) || 0) * SWING_ORIENTATION_SCALE * Math.PI / 180;
-    let angleY = (parseFloat(document.getElementById('angleY').value) || 0) * SWING_ORIENTATION_SCALE * Math.PI / 180;
+    let speed = (currentSwingSpeed || 10) * ballPhysics.swingAccelerationScale;
+    let angleX = (currentSwingAngleX || 0) * SWING_ORIENTATION_SCALE * Math.PI / 180;
+    let angleY = (currentSwingAngleY || 0) * SWING_ORIENTATION_SCALE * Math.PI / 180;
 
     let horizComponent = Math.cos(angleY);
     ballPhysics.vel.x = speed * Math.sin(angleX) * horizComponent;
