@@ -265,27 +265,11 @@ function drawSplashOnBoard(ballPos) {
     const pixelX = uvX * boardTextureCanvas.width;
     const pixelY = (1 - uvY) * boardTextureCanvas.height; // flip Y for canvas coords
 
-    const splashCount = 5 + Math.floor(Math.random() * 4); // 5-8 splashes per impact
-    const maxRadius = 8 + Math.random() * 12; // Bigger base size
-
-    for (let i = 0; i < splashCount; i++) {
-        // Random offset from impact point
-        const angle = Math.random() * Math.PI * 2;
-        const distance = Math.random() * 15; // Spread radius
-        const offsetX = Math.cos(angle) * distance;
-        const offsetY = Math.sin(angle) * distance;
-
-        // Random size variation
-        const sizeVariation = 0.4 + Math.random() * 0.6; // 0.4-1.0 multiplier
-        const radius = maxRadius * sizeVariation;
-
-        // Draw splash with variation
-        boardDrawerService.drawSplash(
-            pixelX + offsetX,
-            pixelY + offsetY,
-            radius
-        );
-    }
+     // Single splash with random size variation
+    const baseSize = 25; // Bigger base splash size
+    const sizeVariation = baseSize * (0.7 + Math.random() * 0.6); // 70%-130% of base size
+    
+    boardDrawerService.drawSplash(pixelX, pixelY, sizeVariation);
     boardCanvasTexture.needsUpdate = true;
 }
 
