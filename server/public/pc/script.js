@@ -14,8 +14,8 @@ let camera = new THREE.OrthographicCamera(
     0.1,
     1000
 );
-camera.position.set(0, 10, 5);
-camera.lookAt(0, 10, -14);
+camera.position.set(0, 4, 5);
+camera.lookAt(0, 4, -14);
 
 const canvas = document.getElementById('canvas');
 let renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
@@ -96,7 +96,7 @@ function updateBoard() {
 }
 
 // Ball
-let ballGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+let ballGeometry = new THREE.SphereGeometry(1.0, 32, 32);
 let ballMaterial = new THREE.MeshStandardMaterial({
     color: 0x000000,
     metalness: 0.3,
@@ -116,9 +116,9 @@ const boardDrawerService = new InkDrawerService(boardTextureCanvas);
 
 // Physics simulation (simplified)
 let ballPhysics = {
-    pos: new THREE.Vector3(0, 16, BOARD_NEAR),
+    pos: new THREE.Vector3(0, 4, BOARD_NEAR),
     vel: new THREE.Vector3(0, 0, 0),
-    radius: 0.5,
+    radius: 1.0,
     gravity: 0.003,
     damping: 0.999,
     bounceDamping: 0.85,
@@ -128,6 +128,7 @@ let ballPhysics = {
 const IDLE_THRESHOLD = 0.02;
 const IDLE_RESET_DELAY = 2000;
 const MAX_SPEED = 0.5;
+const SWING_ORIENTATION_SCALE = 1.2;
 let idleTimer = null;
 
 let isFlying = false;
@@ -141,8 +142,8 @@ function launchBall() {
     }
 
     let speed = (parseFloat(document.getElementById('speed').value) || 10) * ballPhysics.swingAccelerationScale;
-    let angleX = (parseFloat(document.getElementById('angleX').value) || 0) * Math.PI / 180;
-    let angleY = (parseFloat(document.getElementById('angleY').value) || 0) * Math.PI / 180;
+    let angleX = (parseFloat(document.getElementById('angleX').value) || 0) * SWING_ORIENTATION_SCALE * Math.PI / 180;
+    let angleY = (parseFloat(document.getElementById('angleY').value) || 0) * SWING_ORIENTATION_SCALE * Math.PI / 180;
 
     let horizComponent = Math.cos(angleY);
     ballPhysics.vel.x = speed * Math.sin(angleX) * horizComponent;
@@ -167,7 +168,7 @@ function launchBall() {
 }
 
 function resetScene() {
-    ballPhysics.pos.set(0, 10, BOARD_NEAR);
+    ballPhysics.pos.set(0, 4, BOARD_NEAR);
     ballPhysics.vel.set(0, 0, 0);
     isFlying = false;
     let indicator = document.getElementById('queuedIndicator');
@@ -329,8 +330,12 @@ function animate() {
     // Scale ball based on distance from camera to simulate perspective
     const dist = camera.position.z - ballPhysics.pos.z; 
     const refDist = camera.position.z - BOARD_NEAR;
-    const scale = Math.max(0.1, refDist / dist);
+    // minimal scaling
+    const scale = Math.max(0.5, refDist / dist);
     ballMesh.scale.setScalar(scale);
+
+    // Offset visual mesh to prevent hovering off the ground when scaled down
+    ballMesh.position.y -= ballPhysics.radius * (1 - scale);
 
     updateInfo();
     renderer.render(scene, camera);
