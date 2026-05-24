@@ -163,7 +163,7 @@ function launchBall() {
 }
 
 function resetScene() {
-    ballPhysics.pos.set(0, 16, BOARD_NEAR);
+    ballPhysics.pos.set(0, 10, BOARD_NEAR);
     ballPhysics.vel.set(0, 0, 0);
     isFlying = false;
     let indicator = document.getElementById('queuedIndicator');
