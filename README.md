@@ -1,8 +1,8 @@
 # Ping Pong Paint
 
 ## The Ping-Pong Paint Project (PPPP)
-The **PPPP**is an interactive game focused around this year's HackTheMountain topic: Arts. Instead of just admiring art, we 
-wanted people to a part of it, either by ping-pong painting on a blank canvas or recreate in this style reknown art works of all eras. 
+The **PPPP** is an interactive game focused around this year's HackTheMountain topic: Arts. Instead of just admiring art, we 
+wanted people to be a part of it, either by ping-pong painting on a blank canvas or by recreating classic works of art in this unconventional style.
 
 ## Technical Stack
 - **Node.js**: The underlying JavaScript runtime environment.
