@@ -62,6 +62,17 @@ let BOARD_NEAR = 2.5;  // near bounce wall Z
 const BOARD_W = 40;
 const BOARD_H = 25;
 
+// Physics simulation (simplified)
+let ballPhysics = {
+    pos: new THREE.Vector3(0, 4, BOARD_NEAR),
+    vel: new THREE.Vector3(0, 0, 0),
+    radius: 1.0,
+    gravity: 0.003,
+    damping: 0.999,
+    bounceDamping: 0.85,
+    swingAccelerationScale: 0.01
+};
+
 // Create a canvas texture for the board
 const boardTextureCanvas = document.createElement('canvas');
 boardTextureCanvas.width = 1600;  // 4x resolution for better clarity
@@ -97,8 +108,65 @@ let ballMaterial = new THREE.MeshStandardMaterial({
     emissive: 0xff4500,
     emissiveIntensity: 0.05
 });
-let ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
-scene.add(ballMesh);
+const balls = [];
+let ballIdCounter = 0;
+
+function createBall() {
+    const mesh = new THREE.Mesh(ballGeometry, ballMaterial);
+    scene.add(mesh);
+
+    const ball = {
+        id: ++ballIdCounter,
+        mesh,
+        physics: {
+            pos: new THREE.Vector3(0, 4, BOARD_NEAR),
+                   vel: new THREE.Vector3(0, 0, 0),
+            radius: ballPhysics.radius},
+        isFlying: false,
+        idleTimer: null
+    };
+    resetBall(ball);
+    return ball;
+}
+
+function removeBall(ball) {
+    if (!ball) return;
+    if (ball.idleTimer) {
+        clearTimeout(ball.idleTimer);
+        ball.idleTimer = null;
+    }
+    scene.remove(ball.mesh);
+    const index = balls.indexOf(ball);
+    if (index !== -1) balls.splice(index, 1);
+}
+
+function setBallCount(count) {
+    count = Math.max(0, Math.floor(count));
+    while (balls.length < count) {
+        balls.push(createBall());
+    }
+    while (balls.length > count) {
+        removeBall(balls[balls.length - 1]);
+    }
+    // Refresh UI
+}
+
+function getHittableBalls() {
+    return balls.filter(ball => ball.mesh.visible && !ball.isFlying && ball.physics.pos.z >= (BOARD_NEAR - HITTING_ZONE_DEPTH));
+}
+
+function chooseRandomHittableBall() {
+    const hittable = getHittableBalls();
+    if (!hittable.length) return null;
+    return hittable[Math.floor(Math.random() * hittable.length)];
+}
+
+window.setBallCount = setBallCount;
+// Apply any pending count set by outline before script loaded
+if (window.__pendingBallCount !== undefined) {
+    setBallCount(window.__pendingBallCount);
+    delete window.__pendingBallCount;
+}
 
 // ── RAYCASTING for board clicks ──────────────────────────────────────────
 const raycaster = new THREE.Raycaster();
@@ -107,16 +175,6 @@ const mouse = new THREE.Vector2();
 // Create drawer service for the board texture
 const boardDrawerService = new InkDrawerService(boardTextureCanvas);
 
-// Physics simulation (simplified)
-let ballPhysics = {
-    pos: new THREE.Vector3(0, 4, BOARD_NEAR),
-    vel: new THREE.Vector3(0, 0, 0),
-    radius: 1.0,
-    gravity: 0.003,
-    damping: 0.999,
-    bounceDamping: 0.85,
-    swingAccelerationScale: 0.01
-};
 
 // Game state
 let gameStarted = false;
@@ -131,7 +189,6 @@ function startGame() {
         indicator.classList.add('active');
         indicator.textContent = 'Ready';
     }
-    updateStatus();
 }
 
 // expose startGame globally so other scripts can call it
@@ -141,11 +198,7 @@ const IDLE_THRESHOLD = 0.02;
 const IDLE_RESET_DELAY = 2000;
 const MAX_SPEED = 0.5;
 const SWING_ORIENTATION_SCALE = 1.2;
-let idleTimer = null;
-
-let isFlying = false;
 const HITTING_ZONE_DEPTH = 3.0;
-let lastBoardCollisionZ = null;  // Track last collision to avoid duplicate splashes
 
 // Swing variables
 let currentSwingSpeed = 50;
@@ -161,16 +214,17 @@ function updateSwing(speed, angleX, angleY) {
 function launchBall() {
     // Don't allow hits before the game has started
     if (!gameStarted) {
-        const statusBarEl = document.getElementById('statusBar');
-        if (statusBarEl) statusBarEl.textContent = 'Game not started • Press START';
         return;
     }
 
-    // Prevent launching if ball is currently hidden (respawning)
-    if (!ballMesh.visible) return;
+    const targetBall = chooseRandomHittableBall();
+    if (!targetBall) {
+        return;
+    }
 
-    // If ball is flying and NOT in the hitting zone, the hit doesn't count
-    if (isFlying && ballPhysics.pos.z < (BOARD_NEAR - HITTING_ZONE_DEPTH)) {
+    if (!targetBall.mesh.visible) return;
+
+    if (targetBall.isFlying && targetBall.physics.pos.z < (BOARD_NEAR - HITTING_ZONE_DEPTH)) {
         return;
     }
 
@@ -179,12 +233,15 @@ function launchBall() {
     let angleY = (currentSwingAngleY || 0) * SWING_ORIENTATION_SCALE * Math.PI / 180;
 
     let horizComponent = Math.cos(angleY);
-    ballPhysics.vel.x = speed * Math.sin(angleX) * horizComponent;
-    ballPhysics.vel.y = speed * Math.sin(angleY);
-    // Force Z velocity to be negative (towards the board)
-    ballPhysics.vel.z = -Math.abs(speed * Math.cos(angleX) * horizComponent);
+    targetBall.physics.vel.x = speed * Math.sin(angleX) * horizComponent;
+    targetBall.physics.vel.y = speed * Math.sin(angleY);
+    targetBall.physics.vel.z = -Math.abs(speed * Math.cos(angleX) * horizComponent);
 
-    isFlying = true;
+    targetBall.isFlying = true;
+    if (targetBall.idleTimer) {
+        clearTimeout(targetBall.idleTimer);
+        targetBall.idleTimer = null;
+    }
 
     let indicator = document.getElementById('queuedIndicator');
     if (indicator) {
@@ -196,24 +253,21 @@ function launchBall() {
             }
         }, 1000);
     }
-
-    updateStatus();
 }
 
-function resetScene() {
-    // Random position within the board's bounds
+function resetBall(ball) {
+    if (!ball) return;
     const randomX = (Math.random() - 0.5) * (BOARD_W - ballPhysics.radius * 2);
-    // Random Y between ground and top of the board
     const randomY = ballPhysics.radius + Math.random() * (BOARD_H - ballPhysics.radius);
 
-    ballPhysics.pos.set(randomX, randomY, BOARD_NEAR);
-    ballPhysics.vel.set(0, 0, 0);
-    isFlying = false;
-    ballMesh.visible = true;
+    ball.physics.pos.set(randomX, randomY, BOARD_NEAR);
+    ball.physics.vel.set(0, 0, 0);
+    ball.isFlying = false;
+    ball.mesh.visible = true;
 
-    if (idleTimer) {
-        clearTimeout(idleTimer);
-        idleTimer = null;
+    if (ball.idleTimer) {
+        clearTimeout(ball.idleTimer);
+        ball.idleTimer = null;
     }
 
     let indicator = document.getElementById('queuedIndicator');
@@ -221,30 +275,6 @@ function resetScene() {
         indicator.classList.remove('active');
         indicator.textContent = 'Ready';
     }
-    updateStatus();
-}
-
-function updateStatus() {
-    const statusBarEl = document.getElementById('statusBar');
-    if (statusBarEl) {
-        if (!gameStarted) {
-            statusBarEl.textContent = 'Game not started • Press START';
-        } else if (isFlying) {
-            statusBarEl.textContent = 'Ball in flight... Wait for it to return to the hitting zone';
-        } else {
-            statusBarEl.textContent = 'Ready • Press Space or Enter to begin';
-        }
-    }
-
-    const infoStatusEl = document.getElementById('infoStatus');
-    if (infoStatusEl) infoStatusEl.textContent = isFlying ? 'Flying' : 'Idle';
-}
-
-function updateInfo() {
-    let speed = ballPhysics.vel.length();
-    document.getElementById('infoZ').textContent = Math.abs(ballPhysics.pos.z).toFixed(1);
-    document.getElementById('infoSpeed').textContent = speed.toFixed(2);
-    document.getElementById('infoY').textContent = ballPhysics.pos.y.toFixed(2);
 }
 
 function drawSplashOnBoard(ballPos) {
@@ -274,66 +304,51 @@ function drawSplashOnBoard(ballPos) {
 }
 
 function updatePhysics(delta) {
+    function updateBallPhysics(ball, deltaSec) {
+        if (!ball.isFlying) return;
+        const t = deltaSec * 60;
 
-    if (!isFlying) return;
+        ball.physics.vel.y -= ballPhysics.gravity * t;
+        ball.physics.vel.multiplyScalar(Math.pow(ballPhysics.damping, t));
 
-    const t = delta * 60; // normalize to 60fps
+        if (ball.physics.vel.length() > MAX_SPEED) {
+            ball.physics.vel.normalize().multiplyScalar(MAX_SPEED);
+        }
 
-    // Gravity
-    ballPhysics.vel.y -= ballPhysics.gravity * t;
+        if (Math.abs(ball.physics.vel.x) < 0.01) ball.physics.vel.x = 0;
+        if (Math.abs(ball.physics.vel.z) < 0.01) ball.physics.vel.z = 0;
 
-    // Damping
-    ballPhysics.vel.multiplyScalar(Math.pow(ballPhysics.damping, t));
+        ball.physics.pos.x += ball.physics.vel.x * t;
+        ball.physics.pos.y += ball.physics.vel.y * t;
+        ball.physics.pos.z += ball.physics.vel.z * t;
 
+        const r = ballPhysics.radius;
+        const halfW = BOARD_W / 2;
+        const boardTop = board.position.y + BOARD_H / 2;
 
-    //Cap speed
-    if (ballPhysics.vel.length() > MAX_SPEED) {
-        ballPhysics.vel.normalize().multiplyScalar(MAX_SPEED);
-    }
+        if (ball.physics.pos.x > halfW - r) {
+            ball.physics.pos.x = halfW - r;
+            ball.physics.vel.x *= -ballPhysics.bounceDamping;
+        }
 
-    // Kill horizontal movement if too slow, but keep gravity
-    if (Math.abs(ballPhysics.vel.x) < 0.01) ballPhysics.vel.x = 0;
-    if (Math.abs(ballPhysics.vel.z) < 0.01) ballPhysics.vel.z = 0;
+        if (ball.physics.pos.x < -(halfW - r)) {
+            ball.physics.pos.x = -(halfW - r);
+            ball.physics.vel.x *= -ballPhysics.bounceDamping;
+        }
+        
+        if (ball.physics.pos.y > boardTop - r) {
+            ball.physics.pos.y = boardTop - r;
+            ball.physics.vel.y *= -ballPhysics.bounceDamping;
+        }
 
-    // Update position
-    ballPhysics.pos.x += ballPhysics.vel.x * t;
-    ballPhysics.pos.y += ballPhysics.vel.y * t;
-    ballPhysics.pos.z += ballPhysics.vel.z * t;
+        if (ball.physics.pos.y < r) {
+            ball.physics.pos.y = r;
+            ball.physics.vel.y *= -ballPhysics.bounceDamping;
+        }
 
-    const r = ballPhysics.radius;
-    const halfW = BOARD_W / 2;
-    const boardTop = board.position.y + BOARD_H / 2;
-    const boardBottom = board.position.y - BOARD_H / 2;
-
-    // Horizontal bounds (board edges)
-    if (ballPhysics.pos.x > halfW - r) {
-        ballPhysics.pos.x = halfW - r;
-        ballPhysics.vel.x *= -ballPhysics.bounceDamping;
-    }
-    if (ballPhysics.pos.x < -(halfW - r)) {
-        ballPhysics.pos.x = -(halfW - r);
-        ballPhysics.vel.x *= -ballPhysics.bounceDamping;
-    }
-
-    // Vertical upper bound (top of board)
-    if (ballPhysics.pos.y > boardTop - r) {
-        ballPhysics.pos.y = boardTop - r;
-        ballPhysics.vel.y *= -ballPhysics.bounceDamping;
-    }
-
-    // Floor
-    if (ballPhysics.pos.y < r) {
-        ballPhysics.pos.y = r;
-        ballPhysics.vel.y *= -ballPhysics.bounceDamping;
-    }
-
-    // Board collision (far wall)
-    if (ballPhysics.pos.z < BOARD_Z) {
-        // Only create splash if ball just hit the board (crossed threshold)
-        if (lastBoardCollisionZ === null || lastBoardCollisionZ > BOARD_Z) {
-            drawSplashOnBoard(ballPhysics.pos);
-            // Play impact sound based on selected material
-            const impactSpeed = Math.abs(ballPhysics.vel.z);
+        if (ball.physics.pos.z < BOARD_Z) {
+            drawSplashOnBoard(ball.physics.pos);
+            const impactSpeed = Math.abs(ball.physics.vel.z);
             const material = window.selectedMaterial || 'metal';
             if (material === 'wood' && window.woodBuffer && typeof window.playSoundWithPitch === 'function') {
                 const pitch = 0.8 + Math.min(impactSpeed * 0.4, 0.8);
@@ -345,74 +360,62 @@ function updatePhysics(delta) {
                 const frequency = 400 + Math.min(impactSpeed * 200, 400);
                 window.playMetalSound(frequency);
             }
-            
-            // Disappear the ball and respawn after a short delay
-            ballMesh.visible = false;
-            isFlying = false;
-            ballPhysics.vel.set(0, 0, 0); // Freeze
+
+            ball.mesh.visible = false;
+            ball.isFlying = false;
+            ball.physics.vel.set(0, 0, 0);
+            ball.lastCollisionZ = ball.physics.pos.z;
 
             setTimeout(() => {
-                resetScene();
-            }, 250); // 250ms delay before random respawn
+                resetBall(ball);
+            }, 250);
+            return;
         }
-        lastBoardCollisionZ = ballPhysics.pos.z;
-        ballPhysics.pos.z = BOARD_Z;
-    } else {
-        lastBoardCollisionZ = null;  // Reset when ball leaves board zone
+
+        if (ball.physics.pos.z > BOARD_NEAR) {
+            ball.physics.pos.z = BOARD_NEAR;
+            ball.physics.vel.z *= -ballPhysics.bounceDamping;
+        }
+
+        if (Math.abs(ball.physics.vel.x) < IDLE_THRESHOLD &&
+            Math.abs(ball.physics.vel.y) < IDLE_THRESHOLD &&
+            Math.abs(ball.physics.vel.z) < IDLE_THRESHOLD) {
+            if (!ball.idleTimer) {
+                ball.idleTimer = setTimeout(() => {
+                    resetBall(ball);
+                    ball.idleTimer = null;
+                }, IDLE_RESET_DELAY);
+            }
+        } else {
+            if (ball.idleTimer) {
+                clearTimeout(ball.idleTimer);
+                ball.idleTimer = null;
+            }
+        }
     }
 
-    // Near wall
-    if (ballPhysics.pos.z > BOARD_NEAR) {
-        ballPhysics.pos.z = BOARD_NEAR;
-        ballPhysics.vel.z *= -ballPhysics.bounceDamping;
-    }
-
-    if (Math.abs(ballPhysics.vel.x) < IDLE_THRESHOLD &&
-        Math.abs(ballPhysics.vel.y) < IDLE_THRESHOLD &&
-        Math.abs(ballPhysics.vel.z) < IDLE_THRESHOLD) {
-        if (!idleTimer) {
-            idleTimer = setTimeout(() => {
-                resetScene();
-                idleTimer = null;
-            }, IDLE_RESET_DELAY);
-        }
-    } else {
-        // Ball is still moving, cancel any pending reset
-        if (idleTimer) {
-            clearTimeout(idleTimer);
-            idleTimer = null;
-        }
-    }
+    balls.forEach(ball => updateBallPhysics(ball, delta));
 }
 
-
-
 const clock = new THREE.Clock();
-
 
 function animate() {
     requestAnimationFrame(animate);
     const delta = clock.getDelta(); // seconds since last frame
     updatePhysics(delta);
 
-    // Update ball mesh position
-    ballMesh.position.copy(ballPhysics.pos);
+        balls.forEach((ball) => {
+            if (!ball.mesh.visible) return;
+            ball.mesh.position.copy(ball.physics.pos);
 
-    // Linear perspective scaling
-    const dist = camera.position.z - ballPhysics.pos.z;
-    const refDist = camera.position.z - BOARD_NEAR;
-
-    // Scale factor decreases linearly with distance
-    const linearScaleFactor = 0.06;
-    let scale = 1.0 - ((dist - refDist) * linearScaleFactor);
-    if (scale < 0) scale = 0;
-
-    ballMesh.scale.setScalar(scale);
-
-    // Offset visual mesh to prevent hovering off the ground when scaled down
-    ballMesh.position.y -= ballPhysics.radius * (1 - scale);
-
-    updateInfo();
+            const dist = camera.position.z - ball.physics.pos.z;
+            const refDist = camera.position.z - BOARD_NEAR;
+            const linearScaleFactor = 0.06;
+            let scale = 1.0 - ((dist - refDist) * linearScaleFactor);
+            if (scale < 0) scale = 0;
+            ball.mesh.scale.setScalar(scale);
+            ball.mesh.position.y -= ball.physics.radius * (1 - scale);
+        });
 
     // Dual-camera rendering
     renderer.clear(); // Clear color and depth
@@ -449,13 +452,17 @@ window.addEventListener('resize', () => {
 
 // Keyboard input
 document.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        launchBall();
+    if (e.key === 'd' || e.key === 'D') {
+        if (!gameStarted) return;
+        const link = document.createElement('a');
+        link.download = 'painting.png';
+        link.href = boardTextureCanvas.toDataURL('image/png');
+        link.click();
     }
 });
 
 
 // Initialize
-resetScene();
-animate();;
+// Initialize
+setBallCount(0);
+animate();
