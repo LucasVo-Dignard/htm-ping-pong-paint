@@ -149,6 +149,9 @@ const HITTING_ZONE_DEPTH = 3.0;
 let lastBoardCollisionZ = null;  // Track last collision to avoid duplicate splashes
 
 function launchBall() {
+    // Prevent launching if ball is currently hidden (respawning)
+    if (!ballMesh.visible) return;
+
     // If ball is flying and NOT in the hitting zone, the hit doesn't count
     if (isFlying && ballPhysics.pos.z < (BOARD_NEAR - HITTING_ZONE_DEPTH)) {
         return;
@@ -181,9 +184,15 @@ function launchBall() {
 }
 
 function resetScene() {
-    ballPhysics.pos.set(0, 4, BOARD_NEAR);
+    // Random position within the board's bounds
+    const randomX = (Math.random() - 0.5) * (BOARD_W - ballPhysics.radius * 2);
+    // Random Y between ground and top of the board
+    const randomY = ballPhysics.radius + Math.random() * (BOARD_H - ballPhysics.radius);
+
+    ballPhysics.pos.set(randomX, randomY, BOARD_NEAR);
     ballPhysics.vel.set(0, 0, 0);
     isFlying = false;
+    ballMesh.visible = true;
     let indicator = document.getElementById('queuedIndicator');
     if (indicator) {
         indicator.classList.remove('active');
@@ -295,10 +304,18 @@ function updatePhysics(delta) {
             const impactSpeed = Math.abs(ballPhysics.vel.z);
             const frequency = 400 + Math.min(impactSpeed * 200, 400); // Higher speed = higher pitch
             playMetalSound(frequency);
+            
+            // Disappear the ball and respawn after a short delay
+            ballMesh.visible = false;
+            isFlying = false;
+            ballPhysics.vel.set(0, 0, 0); // Freeze
+            
+            setTimeout(() => {
+                resetScene();
+            }, 500); // 500ms delay before random respawn
         }
         lastBoardCollisionZ = ballPhysics.pos.z;
         ballPhysics.pos.z = BOARD_Z;
-        ballPhysics.vel.z *= -ballPhysics.bounceDamping;
     } else {
         lastBoardCollisionZ = null;  // Reset when ball leaves board zone
     }
