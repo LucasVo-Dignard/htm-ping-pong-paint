@@ -127,16 +127,14 @@ const MAX_SPEED = 0.5;
 let idleTimer = null;
 
 let isFlying = false;
-let queuedInput = null;
+const HITTING_ZONE_DEPTH = 3.0;
 let lastBoardCollisionZ = null;  // Track last collision to avoid duplicate splashes
 
 function launchBall() {
-    if (isFlying && !queuedInput) {
-        queueInput();
+    // If ball is flying and NOT in the hitting zone, the hit doesn't count
+    if (isFlying && ballPhysics.pos.z < (BOARD_NEAR - HITTING_ZONE_DEPTH)) {
         return;
     }
-
-    if (isFlying) return;
 
     let speed = (parseFloat(document.getElementById('speed').value) || 10) * ballPhysics.swingAccelerationScale;
     let angleX = (parseFloat(document.getElementById('angleX').value) || 0) * Math.PI / 180;
@@ -145,36 +143,42 @@ function launchBall() {
     let horizComponent = Math.cos(angleY);
     ballPhysics.vel.x = speed * Math.sin(angleX) * horizComponent;
     ballPhysics.vel.y = speed * Math.sin(angleY);
-    ballPhysics.vel.z = -speed * Math.cos(angleX) * horizComponent;
+    // Force Z velocity to be negative (towards the board)
+    ballPhysics.vel.z = -Math.abs(speed * Math.cos(angleX) * horizComponent);
 
     isFlying = true;
-    queuedInput = null;
-    document.getElementById('queuedIndicator').classList.remove('active');
-    document.getElementById('queuedIndicator').textContent = 'No input queued';
+    
+    let indicator = document.getElementById('queuedIndicator');
+    if (indicator) {
+        indicator.classList.remove('active');
+        indicator.textContent = 'Hit registered!';
+        setTimeout(() => { 
+            if (indicator.textContent === 'Hit registered!') {
+                indicator.textContent = 'Ready'; 
+            }
+        }, 1000);
+    }
+    
     updateStatus();
 }
 
-function queueInput() {
-    queuedInput = true;
-    document.getElementById('queuedIndicator').classList.add('active');
-    document.getElementById('queuedIndicator').textContent = '✓ Input queued - will launch on return';
-}
-
 function resetScene() {
-    ballPhysics.pos.set(0, 10, BOARD_NEAR);
+    ballPhysics.pos.set(0, 16, BOARD_NEAR);
     ballPhysics.vel.set(0, 0, 0);
     isFlying = false;
-    queuedInput = null;
-    document.getElementById('queuedIndicator').classList.remove('active');
-    document.getElementById('queuedIndicator').textContent = 'No input queued';
+    let indicator = document.getElementById('queuedIndicator');
+    if (indicator) {
+        indicator.classList.remove('active');
+        indicator.textContent = 'Ready';
+    }
     updateStatus();
 }
 
 function updateStatus() {
     let launchBtn = document.getElementById('launchBtn');
     if (isFlying) {
-        document.getElementById('statusBar').textContent = 'Ball in flight... Press LAUNCH to queue next shot';
-        launchBtn.textContent = queuedInput ? '✓ QUEUED' : '⏱ QUEUE';
+        document.getElementById('statusBar').textContent = 'Ball in flight... Wait for it to return to the hitting zone';
+        launchBtn.textContent = 'WAIT';
     } else {
         document.getElementById('statusBar').textContent = 'Ready • Press LAUNCH to begin';
         launchBtn.textContent = '▶ LAUNCH';
@@ -332,9 +336,7 @@ window.addEventListener('resize', () => {
 
 // Keyboard input
 document.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && isFlying && !queuedInput) {
-        queueInput();
-    } else if (e.key === ' ') {
+    if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         launchBall();
     }
