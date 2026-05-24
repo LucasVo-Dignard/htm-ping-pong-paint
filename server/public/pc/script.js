@@ -15,13 +15,13 @@ let camera = new THREE.OrthographicCamera(
     0.1,
     1000
 );
-camera.position.set(0, 10, 5);
-camera.lookAt(0, 10, -14);
+camera.position.set(0, 12, 5);
+camera.lookAt(0, 12, -14);
 
 // Perspective camera for the floor (Layer 1)
 let cameraPersp = new THREE.PerspectiveCamera(70, aspect, 0.1, 1000);
-cameraPersp.position.set(0, 10, 5);
-cameraPersp.lookAt(0, 10, -14);
+cameraPersp.position.set(0, 12, 5);
+cameraPersp.lookAt(0, 12, -14);
 cameraPersp.layers.set(1);
 
 const canvas = document.getElementById('canvas');
@@ -151,7 +151,7 @@ let lastBoardCollisionZ = null;  // Track last collision to avoid duplicate spla
 // Swing variables
 let currentSwingSpeed = 50;
 let currentSwingAngleX = 0;
-let currentSwingAngleY = 5;
+let currentSwingAngleY = 0;
 
 function updateSwing(speed, angleX, angleY) {
     if (speed !== undefined) currentSwingSpeed = speed;
