@@ -120,7 +120,7 @@ let ballPhysics = {
     bounceDamping: 0.85
 };
 
-const IDLE_THRESHOLD = 0.02;
+const IDLE_THRESHOLD = 0.05;
 const IDLE_RESET_DELAY = 2000;
 const MAX_SPEED = 1;
 let idleTimer = null;

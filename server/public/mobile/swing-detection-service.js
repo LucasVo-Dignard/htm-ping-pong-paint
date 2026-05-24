@@ -91,13 +91,19 @@ class SwingDetectionService {
 
     return {
       x: nx,
-      y: nz,
-      z: ny,
+      y: ny,
+      z: nz,
     };
   }
 
   logSwing(zAcceleration) {
     const directionVector = this.getDirectionVector();
+
+    if (zAcceleration > 0) {
+      directionVector.x *= -1;
+      directionVector.y *= -1;
+      directionVector.z *= -1;
+    }
 
     console.log('Swing detected', {
       zAcceleration: Number(zAcceleration.toFixed(2)),
