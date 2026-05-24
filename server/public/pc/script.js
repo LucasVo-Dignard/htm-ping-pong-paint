@@ -16,7 +16,7 @@ let camera = new THREE.OrthographicCamera(
     0.1,
     1000
 );
-camera.position.set(0, 4, 5);
+camera.position.set(0, 10, 5);
 camera.lookAt(0, 4, -14);
 
 // Perspective camera for the floor (Layer 1)
@@ -340,12 +340,13 @@ function animate() {
     // Update ball mesh position
     ballMesh.position.copy(ballPhysics.pos);
 
-    // Slow perspective scaling with no hard minimum
+    // Linear perspective scaling
     const dist = camera.position.z - ballPhysics.pos.z; 
     const refDist = camera.position.z - BOARD_NEAR;
     
-    // Scale factor approaches 0 slowly as distance increases
-    let scale = 1 / (1 + (dist - refDist) * 0.02);
+    // Scale factor decreases linearly with distance
+    const linearScaleFactor = 0.015;
+    let scale = 1.0 - ((dist - refDist) * linearScaleFactor);
     if (scale < 0) scale = 0;
     
     ballMesh.scale.setScalar(scale);
