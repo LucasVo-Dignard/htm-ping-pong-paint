@@ -149,8 +149,6 @@ function setBallCount(count) {
         removeBall(balls[balls.length - 1]);
     }
     // Refresh UI
-    updateInfo();
-    updateStatus();
 }
 
 function getHittableBalls() {
