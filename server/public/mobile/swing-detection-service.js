@@ -91,7 +91,7 @@ class SwingDetectionService {
 
     return {
       x: nx,
-      y: -nz,
+      y: nz,
       z: ny,
     };
   }
