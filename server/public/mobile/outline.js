@@ -8,8 +8,6 @@ const mobileOutline = {
     const card = root.querySelector('.page-card');
     if (!card) return;
 
-    this.showTouchHint(card);
-
     // --- Socket join logic ---
     // Requires socket.io client script to be included on the page.
     try {
@@ -35,7 +33,6 @@ const mobileOutline = {
       // elements
       const input = document.getElementById('code-input') || document.querySelector('input[name="code"]');
       const joinBtn = document.getElementById('join-btn') || card.querySelector('button.join-btn');
-      const errorEl = document.getElementById('error-message');
 
       function validateRoomCode(value) {
         return /^[A-Z]{4}$/.test(value);
@@ -50,20 +47,13 @@ const mobileOutline = {
         input.addEventListener('input', () => {
           const normalized = normalizeInputValue(input.value);
           if (input.value !== normalized) input.value = normalized;
-          if (errorEl && !errorEl.classList.contains('hidden') && validateRoomCode(normalized)) {
-            errorEl.classList.add('hidden');
-          }
         });
       }
 
       async function joinWithCode(c) {
         const codeClean = normalizeInputValue(c || (input && input.value));
         if (!validateRoomCode(codeClean)) {
-          if (errorEl) {
-            errorEl.textContent = codeClean.length === 0 ? 'Room code is required.' : 'Enter exactly 4 letters.';
-            errorEl.classList.remove('hidden');
-          }
-          setStatus('Invalid code', false);
+          setStatus(codeClean.length === 0 ? 'Room code is required.' : 'Enter exactly 4 letters.', false);
           return;
         }
 
@@ -93,13 +83,8 @@ const mobileOutline = {
           setStatus('Joined — waiting for game', true);
           if (input) input.disabled = true;
           if (joinBtn) joinBtn.disabled = true;
-          if (errorEl) errorEl.classList.add('hidden');
         } else { // 'error' (or any unexpected value)
           setStatus('Failed to join — invalid code', false);
-          if (errorEl) {
-            errorEl.textContent = 'Failed to join — invalid code';
-            errorEl.classList.remove('hidden');
-          }
         }
       });
 
@@ -113,13 +98,6 @@ const mobileOutline = {
       console.warn('Socket join not initialized', e);
     }
     // --- end socket join logic ---
-  },
-
-  showTouchHint(card) {
-    const hint = document.createElement('div');
-    hint.className = 'hint';
-    hint.textContent = 'Tip: Mobile pages should prioritize touch interactions and responsive layout.';
-    card.appendChild(hint);
   }
 };
 
