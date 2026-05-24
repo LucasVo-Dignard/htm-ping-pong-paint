@@ -89,12 +89,9 @@ class SwingDetectionService {
     const ny = sA * sG - cA * sB * cG;
     const nz = cB * cG;
 
-    // Rotate output to match game coordinates:
-    // "When i swing forward (z) the y is at 1" -> Forward is -ny, map to y
-    // "When i swing up (y) the z is at 1" -> Up is nz, map to z
     return {
       x: nx,
-      y: nz,
+      y: -nz,
       z: ny,
     };
   }
