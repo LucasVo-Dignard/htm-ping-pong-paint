@@ -340,7 +340,7 @@ function updatePhysics(delta) {
             // Play metallic sound on impact
             const impactSpeed = Math.abs(ballPhysics.vel.z);
             const frequency = 400 + Math.min(impactSpeed * 200, 400); // Higher speed = higher pitch
-            playMetalSound(frequency);
+            window.playMetalSound(frequency);
             
             // Disappear the ball and respawn after a short delay
             ballMesh.visible = false;
