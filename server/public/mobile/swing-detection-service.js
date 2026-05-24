@@ -58,8 +58,6 @@ class SwingDetectionService {
     window.addEventListener('devicemotion', this.onMotion);
     window.addEventListener('deviceorientation', this.onOrientation);
     this.isRunning = true;
-
-    console.log('Swing detection service started.');
   }
 
   stop() {
@@ -71,8 +69,6 @@ class SwingDetectionService {
     window.removeEventListener('deviceorientation', this.onOrientation);
     this.isRunning = false;
     this.isSwingArmed = true;
-
-    console.log('Swing detection service stopped.');
   }
 
   getDirectionVector() {
@@ -109,15 +105,6 @@ class SwingDetectionService {
       directionVector.y *= -1;
       directionVector.z *= -1;
     }
-
-    console.log('Swing detected', {
-      zAcceleration: Number(zAcceleration.toFixed(2)),
-      directionVector: {
-        x: Number(directionVector.x.toFixed(3)),
-        y: Number(directionVector.y.toFixed(3)),
-        z: Number(directionVector.z.toFixed(3)),
-      },
-    });
 
     if (this.callback) {
       this.callback({

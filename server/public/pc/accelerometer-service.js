@@ -26,8 +26,6 @@ class AccelerometerService {
         });
       }
     });
-
-    console.log("Accelerometer service started.");
   }
 
   /**
@@ -35,6 +33,5 @@ class AccelerometerService {
    */
   stop() {
     window.removeEventListener("devicemotion", this.onMotion);
-    console.log("Accelerometer service stopped.");
   }
 }
