@@ -13,7 +13,7 @@ const ClientType = Object.freeze({
   MOBILE: 'mobile'
 });
 
-const PORT = 80; // Default HTTP port: 80, Default HTTPS port: 443
+const PORT = 3000; // Default HTTP port: 80, Default HTTPS port: 443, Server: 3000
 
 const sessions = {}; // { code: {pcSocket: , mobileSockets: } }
 
