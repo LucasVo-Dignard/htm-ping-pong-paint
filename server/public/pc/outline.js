@@ -151,6 +151,8 @@ let plasticBuffer = null;
     if (typeof loadSound === 'function') {
       woodBuffer = await loadSound('/sounds/wood.wav');
       plasticBuffer = await loadSound('/sounds/plastic.wav');
+      window.woodBuffer = woodBuffer;
+      window.plasticBuffer = plasticBuffer;
       console.log('Sound buffers loaded');
     }
   } catch (error) {
@@ -166,6 +168,7 @@ socket.on('material_select', async (data) => {
   }
 
   const material = data.material.toLowerCase();
+  window.selectedMaterial = material;
 
   if (material === 'metal') {
     if (typeof playMetalSound === 'function') {
