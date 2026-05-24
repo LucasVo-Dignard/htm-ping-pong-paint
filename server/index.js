@@ -57,14 +57,6 @@ io.on('connection', (socket) => {
     sessions[code].pcSocket.emit('mobile_update', {count: sessions[code].mobileSockets.length});
   });
 
-  socket.on('swing', (payload) => {
-    console.log('Swing event received from mobile client', {
-      socketId: socket.id,
-      sessionCode: socket.data.code,
-      payload,
-    });
-  });
-
   socket.on('disconnect', () => {
     if (socket.data.type == ClientType.PC) {
       delete sessions[socket.data.code];
@@ -87,6 +79,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('hit', (hitData) => {
+    console.log(hitData);
     const code = socket.data.code;
     if (!code || !sessions[code]) {
       console.warn('Hit received from socket with no valid session');
