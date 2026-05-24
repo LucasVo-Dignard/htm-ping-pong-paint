@@ -32,6 +32,16 @@
             pattern="[A-Za-z]{4}" placeholder="ABCD" inputmode="text" required />
           <button id="join-btn" type="button" class="start-btn join-btn">Join</button>
         </div>
+
+        <!-- Material selection buttons (shown after joining) -->
+        <div id="materials-group" style="display: none; margin-top: 20px;">
+          <label>Select Material</label>
+          <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; justify-content: center;">
+            <button id="material-wood" type="button" class="material-btn" data-material="wood">Wood</button>
+            <button id="material-plastic" type="button" class="material-btn" data-material="plastic">Plastic</button>
+            <button id="material-metal" type="button" class="material-btn" data-material="metal">Metal</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

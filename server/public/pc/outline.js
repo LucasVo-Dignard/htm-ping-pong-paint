@@ -4,7 +4,7 @@ const statusText = document.getElementById('status-text');
 const codeBlock = document.getElementById('code-block');
 const startBtn = document.getElementById('start-btn');
 let currentCode = '';
-let selectedCanvasUrl = null; // null represents the blank canvas
+window.selectedCanvasUrl = null; // null represents the blank canvas
 
 async function loadCanvasOptions() {
   const imageGrid = document.getElementById('image-grid');
@@ -17,7 +17,7 @@ async function loadCanvasOptions() {
   blankDiv.addEventListener('click', () => {
     document.querySelectorAll('.canvas-option').forEach(el => el.classList.remove('selected'));
     blankDiv.classList.add('selected');
-    selectedCanvasUrl = null;
+    window.selectedCanvasUrl = null;
   });
   imageGrid.appendChild(blankDiv);
 
@@ -73,7 +73,7 @@ async function loadCanvasOptions() {
       imgDiv.addEventListener('click', () => {
         document.querySelectorAll('.canvas-option').forEach(el => el.classList.remove('selected'));
         imgDiv.classList.add('selected');
-        selectedCanvasUrl = imgUrl;
+        window.selectedCanvasUrl = imgUrl;
       });
       
       imageGrid.appendChild(imgDiv);
@@ -225,6 +225,49 @@ socket.on('hit', (hitData) => {
     // Trigger the launch
     if (typeof launchBall === 'function') {
       launchBall();
+    }
+  }
+});
+
+let woodBuffer = null;
+let plasticBuffer = null;
+
+// Pre-load sound buffers
+(async () => {
+  try {
+    if (typeof loadSound === 'function') {
+      woodBuffer = await loadSound('/sounds/wood.wav');
+      plasticBuffer = await loadSound('/sounds/plastic.wav');
+      window.woodBuffer = woodBuffer;
+      window.plasticBuffer = plasticBuffer;
+      console.log('Sound buffers loaded');
+    }
+  } catch (error) {
+    console.warn('Failed to preload sound buffers:', error);
+  }
+})();
+
+socket.on('material_select', async (data) => {
+  console.log('Material selected by mobile:', data);
+  
+  if (!data || !data.material) {
+    return;
+  }
+
+  const material = data.material.toLowerCase();
+  window.selectedMaterial = material;
+
+  if (material === 'metal') {
+    if (typeof playMetalSound === 'function') {
+      playMetalSound(500);
+    }
+  } else if (material === 'wood') {
+    if (woodBuffer && typeof playSoundWithPitch === 'function') {
+      await playSoundWithPitch(woodBuffer, 1.0);
+    }
+  } else if (material === 'plastic') {
+    if (plasticBuffer && typeof playSoundWithPitch === 'function') {
+      await playSoundWithPitch(plasticBuffer, 1.0);
     }
   }
 });
