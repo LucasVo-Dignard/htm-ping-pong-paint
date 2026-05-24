@@ -32,41 +32,60 @@ const mobileOutline = {
         statusEl.style.color = ok === false ? '#c0392b' : (ok === true ? '#16a085' : '');
       }
 
-      // determine room code:
-      // 1) query param ?code=XXXX
-      // 2) input field with id "code-input"
-      // 3) prompt the user (fallback)
-      const params = new URLSearchParams(window.location.search);
-      let code = params.get('code');
-
+      // elements
       const input = document.getElementById('code-input') || document.querySelector('input[name="code"]');
-      if (!code && input && input.value) code = input.value.trim();
+      const joinBtn = document.getElementById('join-btn') || card.querySelector('button.join-btn');
+      const errorEl = document.getElementById('error-message');
 
-      async function joinWithCode(c) {
-        if (!c) {
-          // fallback prompt
-          c = window.prompt('Enter room code:');
-          if (!c) {
-            setStatus('No code provided', false);
-            return;
-          }
-        }
-        setStatus('Joining...');
-        socket.emit('join', c);
+      function validateRoomCode(value) {
+        return /^[A-Z]{4}$/.test(value);
       }
 
-      // if there's an input + button, wire them up
-      const joinBtn = document.getElementById('join-btn') || card.querySelector('button.join-btn');
-      if (joinBtn && input) {
-        joinBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          const v = input.value && input.value.trim();
-          joinWithCode(v);
+      function normalizeInputValue(v) {
+        return (v || '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0,4);
+      }
+
+      // keep input normalized as user types
+      if (input) {
+        input.addEventListener('input', () => {
+          const normalized = normalizeInputValue(input.value);
+          if (input.value !== normalized) input.value = normalized;
+          if (errorEl && !errorEl.classList.contains('hidden') && validateRoomCode(normalized)) {
+            errorEl.classList.add('hidden');
+          }
         });
       }
 
-      // attempt auto-join when code available from query or input
-      if (code) joinWithCode(code);
+      async function joinWithCode(c) {
+        const codeClean = normalizeInputValue(c || (input && input.value));
+        if (!validateRoomCode(codeClean)) {
+          if (errorEl) {
+            errorEl.textContent = codeClean.length === 0 ? 'Room code is required.' : 'Enter exactly 4 letters.';
+            errorEl.classList.remove('hidden');
+          }
+          setStatus('Invalid code', false);
+          return;
+        }
+
+        setStatus('Joining...');
+        socket.emit('join', codeClean);
+      }
+
+      // wire button
+      if (joinBtn) {
+        joinBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          joinWithCode();
+        });
+      }
+
+      // attempt auto-join from query param if present
+      const params = new URLSearchParams(window.location.search);
+      const autoCode = normalizeInputValue(params.get('code'));
+      if (autoCode && validateRoomCode(autoCode)) {
+        if (input) input.value = autoCode;
+        joinWithCode(autoCode);
+      }
 
       socket.on('join_response', (status) => {
         // server returns either 'success' or 'error'
@@ -74,8 +93,13 @@ const mobileOutline = {
           setStatus('Joined — waiting for game', true);
           if (input) input.disabled = true;
           if (joinBtn) joinBtn.disabled = true;
+          if (errorEl) errorEl.classList.add('hidden');
         } else { // 'error' (or any unexpected value)
           setStatus('Failed to join — invalid code', false);
+          if (errorEl) {
+            errorEl.textContent = 'Failed to join — invalid code';
+            errorEl.classList.remove('hidden');
+          }
         }
       });
 

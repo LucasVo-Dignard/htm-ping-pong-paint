@@ -16,49 +16,27 @@
       <span id="status-text">Ready</span>
     </div>
 
-    <div class="mobile-panel">
-      <h1>Ping Pong Paint</h1>
-      <p class="lead">Enter a 4-letter room code and tap Join to connect.</p>
+    <!-- app container expected by mobile/outline.js -->
+    <div id="app">
+      <div class="page-card mobile-panel">
+        <h1>Ping Pong Paint</h1>
+        <p class="lead">Enter a 4-letter room code and tap Join to connect.</p>
 
-      <form class="form-group" id="join-form" novalidate>
-        <label for="room-code">Room Code</label>
-        <input id="room-code" name="room-code" type="text" maxlength="4" minlength="4" autocomplete="off"
-          pattern="[A-Za-z]{4}" placeholder="ABCD" inputmode="text" required />
-        <p id="error-message" class="error hidden">Enter exactly 4 letters.</p>
-        <button type="submit" class="start-btn">Join</button>
-      </form>
+        <!-- replaced <form> with a div to avoid page reloads -->
+        <div class="form-group" id="join-group" novalidate>
+          <label for="code-input">Room Code</label>
+          <input id="code-input" name="code" type="text" maxlength="4" minlength="4" autocomplete="off"
+            pattern="[A-Za-z]{4}" placeholder="ABCD" inputmode="text" required />
+          <p id="error-message" class="error hidden">Enter exactly 4 letters.</p>
+          <button id="join-btn" type="button" class="join-btn">Join</button>
+        </div>
 
-      <p class="code-label">Only letters are accepted. Example: PLAY</p>
+        <p class="code-label">Only letters are accepted. Example: PLAY</p>
+      </div>
     </div>
   </div>
-  <script>
-    const form = document.getElementById('join-form');
-    const roomCodeInput = document.getElementById('room-code');
-    const errorMessage = document.getElementById('error-message');
 
-    function validateRoomCode(value) {
-      return /^[A-Za-z]{4}$/.test(value);
-    }
-
-    roomCodeInput.addEventListener('input', () => {
-      roomCodeInput.value = roomCodeInput.value.replace(/[^A-Za-z]/g, '').toUpperCase();
-      if (errorMessage.classList.contains('hidden')) return;
-      if (validateRoomCode(roomCodeInput.value)) {
-        errorMessage.classList.add('hidden');
-      }
-    });
-
-    form.addEventListener('submit', (event) => {
-      const value = roomCodeInput.value.trim();
-      if (!validateRoomCode(value)) {
-        event.preventDefault();
-        errorMessage.textContent = value.length === 0
-          ? 'Room code is required.'
-          : 'Enter exactly 4 letters.';
-        errorMessage.classList.remove('hidden');
-        roomCodeInput.focus();
-      }
-    });
-  </script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/mobile/outline.js" defer></script>
 </body>
 </html>
