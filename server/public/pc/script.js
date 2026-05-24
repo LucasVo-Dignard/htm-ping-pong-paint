@@ -47,7 +47,7 @@ scene.add(floor);
 let BOARD_Z = -10;
 let BOARD_NEAR = 2.5;  // near bounce wall Z
 const BOARD_W = 40;
-const BOARD_H = 22;
+const BOARD_H = 28;
 
 // Create a canvas texture for the board
 const boardTextureCanvas = document.createElement('canvas');
@@ -68,7 +68,7 @@ let boardMaterial = new THREE.MeshStandardMaterial({
     roughness: 0.2
 });
 let board = new THREE.Mesh(boardGeometry, boardMaterial);
-board.position.set(0, BOARD_H / 2 - 4, BOARD_Z);
+board.position.set(0, BOARD_H / 2, BOARD_Z);
 scene.add(board);
 
 // Camera is fixed at z=3; keep near wall always in front of it
@@ -96,7 +96,7 @@ function updateBoard() {
 }
 
 // Ball
-let ballGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+let ballGeometry = new THREE.SphereGeometry(0.5, 32, 32);
 let ballMaterial = new THREE.MeshStandardMaterial({
     color: 0x000000,
     metalness: 0.3,
@@ -118,7 +118,7 @@ const boardDrawerService = new InkDrawerService(boardTextureCanvas);
 let ballPhysics = {
     pos: new THREE.Vector3(0, 16, BOARD_NEAR),
     vel: new THREE.Vector3(0, 0, 0),
-    radius: 0.2,
+    radius: 0.5,
     gravity: 0.003,
     damping: 0.999,
     bounceDamping: 0.85,
@@ -199,7 +199,7 @@ function updateInfo() {
 
 function drawSplashOnBoard(ballPos) {
     // Convert ball's world position to board's local coordinates
-    const boardCenterY = BOARD_H / 2 - 4;
+    const boardCenterY = BOARD_H / 2;
     const localX = ballPos.x;
     const localY = ballPos.y - boardCenterY;
 
@@ -325,6 +325,12 @@ function animate() {
 
     // Update ball mesh position
     ballMesh.position.copy(ballPhysics.pos);
+
+    // Scale ball based on distance from camera to simulate perspective
+    const dist = camera.position.z - ballPhysics.pos.z; 
+    const refDist = camera.position.z - BOARD_NEAR;
+    const scale = Math.max(0.1, refDist / dist);
+    ballMesh.scale.setScalar(scale);
 
     updateInfo();
     renderer.render(scene, camera);
