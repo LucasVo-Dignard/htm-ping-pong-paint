@@ -137,6 +137,9 @@ function setBallCount(count) {
     while (balls.length > count) {
         removeBall(balls[balls.length - 1]);
     }
+    // Refresh UI
+    updateInfo();
+    updateStatus();
 }
 
 function getHittableBalls() {
@@ -150,6 +153,11 @@ function chooseRandomHittableBall() {
 }
 
 window.setBallCount = setBallCount;
+// Apply any pending count set by outline before script loaded
+if (window.__pendingBallCount !== undefined) {
+    setBallCount(window.__pendingBallCount);
+    delete window.__pendingBallCount;
+}
 
 // ── RAYCASTING for board clicks ──────────────────────────────────────────
 const raycaster = new THREE.Raycaster();
