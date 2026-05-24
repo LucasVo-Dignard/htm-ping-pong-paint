@@ -62,6 +62,17 @@ let BOARD_NEAR = 2.5;  // near bounce wall Z
 const BOARD_W = 40;
 const BOARD_H = 25;
 
+// Physics simulation (simplified)
+let ballPhysics = {
+    pos: new THREE.Vector3(0, 4, BOARD_NEAR),
+    vel: new THREE.Vector3(0, 0, 0),
+    radius: 1.0,
+    gravity: 0.003,
+    damping: 0.999,
+    bounceDamping: 0.85,
+    swingAccelerationScale: 0.01
+};
+
 // Create a canvas texture for the board
 const boardTextureCanvas = document.createElement('canvas');
 boardTextureCanvas.width = 1600;  // 4x resolution for better clarity
@@ -109,8 +120,8 @@ function createBall() {
         mesh,
         physics: {
             pos: new THREE.Vector3(0, 4, BOARD_NEAR),
-            vel: new THREE.Vector3(0, 0, 0)
-        },
+                   vel: new THREE.Vector3(0, 0, 0),
+            radius: ballPhysics.radius},
         isFlying: false,
         idleTimer: null
     };
@@ -166,16 +177,6 @@ const mouse = new THREE.Vector2();
 // Create drawer service for the board texture
 const boardDrawerService = new InkDrawerService(boardTextureCanvas);
 
-// Physics simulation (simplified)
-let ballPhysics = {
-    pos: new THREE.Vector3(0, 4, BOARD_NEAR),
-    vel: new THREE.Vector3(0, 0, 0),
-    radius: 1.0,
-    gravity: 0.003,
-    damping: 0.999,
-    bounceDamping: 0.85,
-    swingAccelerationScale: 0.01
-};
 
 // Game state
 let gameStarted = false;
@@ -512,4 +513,4 @@ document.addEventListener('keypress', (e) => {
 // Initialize
 // Initialize
 setBallCount(0);
-animate();;
+animate();
