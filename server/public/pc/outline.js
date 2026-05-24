@@ -166,7 +166,6 @@ if (startBtn) {
 }
 
 socket.on('hit', (hitData) => {
-  console.log('Received hit from mobile:', hitData);
   // Ignore hits until the game has started
   if (!window.gameStarted) return;
   
@@ -226,8 +225,6 @@ let plasticBuffer = null;
 })();
 
 socket.on('material_select', async (data) => {
-  console.log('Material selected by mobile:', data);
-  
   if (!data || !data.material) {
     return;
   }

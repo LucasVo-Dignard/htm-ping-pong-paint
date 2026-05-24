@@ -91,7 +91,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('hit', (hitData) => {
-    console.log(hitData);
     const code = socket.data.code;
     if (!code || !sessions[code]) {
       console.warn('Hit received from socket with no valid session');
@@ -112,7 +111,6 @@ io.on('connection', (socket) => {
     }
 
     const session = sessions[code];
-    console.log(`Material selected: ${data.material} from mobile client`);
 
     // Send to PC
     if (session.pcSocket) {

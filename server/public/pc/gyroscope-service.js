@@ -24,8 +24,6 @@ class GyroscopeService {
         });
       }
     });
-
-    console.log("Gyroscope service started.");
   }
 
   /**
@@ -33,6 +31,5 @@ class GyroscopeService {
    */
   stop() {
     window.removeEventListener("deviceorientation", this.onOrientation);
-    console.log("Gyroscope service stopped.");
   }
 }
