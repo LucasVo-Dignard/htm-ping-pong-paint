@@ -47,6 +47,7 @@ const HIT_Y_OFFSET = 0.5;
       this.autoIndex = 0;
       this.resizeObserver = null;
       this._onPointerEvent = this._onPointerEvent.bind(this);
+      this.pixelService = new PixelConvolutionService();
     }
 
     init() {
@@ -64,10 +65,32 @@ const HIT_Y_OFFSET = 0.5;
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    drawSplash(x, y) {
+    async drawSplash(x, y) {
       const newY = y + HIT_Y_OFFSET;
-      const color = this.activeColor || this._getNextColor();
-      const [r, g, b] = hexToRgb(color);
+      let r, g, b;
+
+      if (window.selectedCanvasUrl) {
+        const img = new Image();
+        img.src = window.selectedCanvasUrl;
+        await new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+
+        const normX = x / this.canvas.width;
+        const normY = newY / this.canvas.height;
+        const imgTargetX = Math.round(normX * img.width);
+        const imgTargetY = Math.round(normY * img.height);
+
+        try {
+          const avgColor = await this.pixelService.getAveragePixelColor(window.selectedCanvasUrl, imgTargetX, imgTargetY);
+          r = avgColor.r; g = avgColor.g; b = avgColor.b;
+        } catch(e) {
+          const color = this.activeColor || this._getNextColor();
+          [r, g, b] = hexToRgb(color);
+        }
+      } else {
+        const color = this.activeColor || this._getNextColor();
+        [r, g, b] = hexToRgb(color);
+      }
+
       const radius = 26 + Math.random() * 10;
       this._drawFilaments(x, newY, radius, r, g, b);
       this._drawDroplets(x, newY, radius, 12 + Math.floor(Math.random() * 8), r, g, b);
