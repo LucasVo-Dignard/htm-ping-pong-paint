@@ -85,10 +85,17 @@ class SwingDetectionService {
     const cG = Math.cos(g), sG = Math.sin(g);
 
     // Calculates the unit vector pointing straight out of the screen (racket face normal)
+    const nx = cA * sG + sA * sB * cG;
+    const ny = sA * sG - cA * sB * cG;
+    const nz = cB * cG;
+
+    // Rotate output to match game coordinates:
+    // "When i swing forward (z) the y is at 1" -> Forward is -ny, map to y
+    // "When i swing up (y) the z is at 1" -> Up is nz, map to z
     return {
-      x: cA * sG + sA * sB * cG,
-      y: sA * sG - cA * sB * cG,
-      z: cB * cG,
+      x: nx,
+      y: -ny,
+      z: nz,
     };
   }
 
