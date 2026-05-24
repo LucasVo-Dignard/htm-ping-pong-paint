@@ -1,3 +1,5 @@
+const HIT_Y_OFFSET = 0.5;
+
 (function () {
   const DEFAULT_PALETTE = [
     '#0a0a0f', '#0d2b8c', '#094d3c', '#8b0000', '#b34700', '#3d0070', '#7a0038', '#1a3d0a', '#1a2330'
@@ -63,15 +65,16 @@
     }
 
     drawSplash(x, y) {
+      const newY = y + HIT_Y_OFFSET;
       const color = this.activeColor || this._getNextColor();
       const [r, g, b] = hexToRgb(color);
       const radius = 26 + Math.random() * 10;
-      this._drawFilaments(x, y, radius, r, g, b);
-      this._drawDroplets(x, y, radius, 12 + Math.floor(Math.random() * 8), r, g, b);
-      this._drawRim(x, y, radius, r, g, b);
-      this._drawTendrils(x, y, radius, r, g, b);
-      this._drawCore(x, y, radius, r, g, b);
-      this._drawSpecks(x, y, radius, r, g, b);
+      this._drawFilaments(x, newY, radius, r, g, b);
+      this._drawDroplets(x, newY, radius, 12 + Math.floor(Math.random() * 8), r, g, b);
+      this._drawRim(x, newY, radius, r, g, b);
+      this._drawTendrils(x, newY, radius, r, g, b);
+      this._drawCore(x, newY, radius, r, g, b);
+      this._drawSpecks(x, newY, radius, r, g, b);
     }
 
     _resizeCanvas() {
