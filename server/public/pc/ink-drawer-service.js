@@ -1,6 +1,6 @@
 const HIT_Y_OFFSET = 0.5;
 const MIN_SPLAT_SIZE = 30;
-const MAX_SPLAT_SIZE = 56;
+const MAX_SPLAT_SIZE = 100;
 
 (function () {
   const DEFAULT_PALETTE = [
