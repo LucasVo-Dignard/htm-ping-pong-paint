@@ -65,24 +65,24 @@ const HIT_Y_OFFSET = 0.5;
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    async drawSplash(x, y) {
+    drawSplash(x, y) {
       const newY = y + HIT_Y_OFFSET;
       let r, g, b;
 
       if (window.selectedCanvasUrl) {
-        const img = new Image();
-        img.src = window.selectedCanvasUrl;
-        await new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+        this.pixelService.prepareImage(window.selectedCanvasUrl);
 
         const normX = x / this.canvas.width;
         const normY = newY / this.canvas.height;
-        const imgTargetX = Math.round(normX * img.width);
-        const imgTargetY = Math.round(normY * img.height);
+        const imgTargetX = Math.round(normX * this.pixelService.imgWidth);
+        const imgTargetY = Math.round(normY * this.pixelService.imgHeight);
 
-        try {
-          const avgColor = await this.pixelService.getAveragePixelColor(window.selectedCanvasUrl, imgTargetX, imgTargetY);
+        const avgColor = this.pixelService.getAveragePixelColorSync(window.selectedCanvasUrl, imgTargetX, imgTargetY);
+        
+        if (avgColor) {
           r = avgColor.r; g = avgColor.g; b = avgColor.b;
-        } catch(e) {
+        } else {
+          // Fallback while loading
           const color = this.activeColor || this._getNextColor();
           [r, g, b] = hexToRgb(color);
         }
