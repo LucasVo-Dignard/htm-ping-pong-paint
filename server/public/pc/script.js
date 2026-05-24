@@ -148,16 +148,6 @@ let isFlying = false;
 const HITTING_ZONE_DEPTH = 3.0;
 let lastBoardCollisionZ = null;  // Track last collision to avoid duplicate splashes
 
-let ballStateInfo = {
-    distance: 0,
-    speed: 0,
-    height: 0,
-    status: 'Ready',
-    launchSpeed: 50,
-    angleX: 0,
-    angleY: 5
-};
-
 function launchBall() {
     // Prevent launching if ball is currently hidden (respawning)
     if (!ballMesh.visible) return;
@@ -167,9 +157,15 @@ function launchBall() {
         return;
     }
 
-    let speed = ballStateInfo.launchSpeed * ballPhysics.swingAccelerationScale;
-    let angleX = ballStateInfo.angleX * SWING_ORIENTATION_SCALE * Math.PI / 180;
-    let angleY = ballStateInfo.angleY * SWING_ORIENTATION_SCALE * Math.PI / 180;
+    // Default to a basic straight hit since UI controls are removed
+    // We will leave these here in case the input logic from mobile is hooked up later
+    let speedElem = document.getElementById('speed');
+    let angleXElem = document.getElementById('angleX');
+    let angleYElem = document.getElementById('angleY');
+
+    let speed = (speedElem ? parseFloat(speedElem.value) : 50) * ballPhysics.swingAccelerationScale;
+    let angleX = (angleXElem ? parseFloat(angleXElem.value) : 0) * SWING_ORIENTATION_SCALE * Math.PI / 180;
+    let angleY = (angleYElem ? parseFloat(angleYElem.value) : 5) * SWING_ORIENTATION_SCALE * Math.PI / 180;
 
     let horizComponent = Math.cos(angleY);
     ballPhysics.vel.x = speed * Math.sin(angleX) * horizComponent;
@@ -179,7 +175,7 @@ function launchBall() {
 
     isFlying = true;
     
-    ballStateInfo.status = 'Flying';
+    document.getElementById('infoStatus').textContent = 'Flying';
 }
 
 function resetScene() {
@@ -193,13 +189,14 @@ function resetScene() {
     isFlying = false;
     ballMesh.visible = true;
     
-    ballStateInfo.status = 'Idle';
+    document.getElementById('infoStatus').textContent = 'Idle';
 }
 
 function updateInfo() {
-    ballStateInfo.speed = ballPhysics.vel.length();
-    ballStateInfo.distance = Math.abs(ballPhysics.pos.z);
-    ballStateInfo.height = ballPhysics.pos.y;
+    let speed = ballPhysics.vel.length();
+    document.getElementById('infoZ').textContent = Math.abs(ballPhysics.pos.z).toFixed(1);
+    document.getElementById('infoSpeed').textContent = speed.toFixed(2);
+    document.getElementById('infoY').textContent = ballPhysics.pos.y.toFixed(2);
 }
 
 function drawSplashOnBoard(ballPos) {
