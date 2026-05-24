@@ -326,10 +326,14 @@ function updatePhysics(delta) {
         const halfW = BOARD_W / 2;
         const boardTop = board.position.y + BOARD_H / 2;
 
-    //Cap speed
-    if (ballPhysics.vel.length() > MAX_SPEED) {
-        ballPhysics.vel.normalize().multiplyScalar(MAX_SPEED);
-    }
+        if (ball.physics.pos.x > halfW - r) {
+            ball.physics.pos.x = halfW - r;
+            ball.physics.vel.x *= -ballPhysics.bounceDamping;
+        }
+        if (ball.physics.pos.x < -(halfW - r)) {
+            ball.physics.pos.x = -(halfW - r);
+            ball.physics.vel.x *= -ballPhysics.bounceDamping;
+        }
 
         if (ball.physics.pos.y > boardTop - r) {
             ball.physics.pos.y = boardTop - r;
