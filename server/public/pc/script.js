@@ -62,6 +62,17 @@ let BOARD_NEAR = 2.5;  // near bounce wall Z
 const BOARD_W = 40;
 const BOARD_H = 25;
 
+// Physics simulation (simplified)
+let ballPhysics = {
+    pos: new THREE.Vector3(0, 4, BOARD_NEAR),
+    vel: new THREE.Vector3(0, 0, 0),
+    radius: 1.0,
+    gravity: 0.003,
+    damping: 0.999,
+    bounceDamping: 0.85,
+    swingAccelerationScale: 0.01
+};
+
 // Create a canvas texture for the board
 const boardTextureCanvas = document.createElement('canvas');
 boardTextureCanvas.width = 1600;  // 4x resolution for better clarity
@@ -109,7 +120,8 @@ function createBall() {
         mesh,
         physics: {
             pos: new THREE.Vector3(0, 4, BOARD_NEAR),
-            vel: new THREE.Vector3(0, 0, 0)
+            vel: new THREE.Vector3(0, 0, 0),
+            radius: ballPhysics.radius
         },
         isFlying: false,
         idleTimer: null
@@ -165,17 +177,6 @@ const mouse = new THREE.Vector2();
 
 // Create drawer service for the board texture
 const boardDrawerService = new InkDrawerService(boardTextureCanvas);
-
-// Physics simulation (simplified)
-let ballPhysics = {
-    pos: new THREE.Vector3(0, 4, BOARD_NEAR),
-    vel: new THREE.Vector3(0, 0, 0),
-    radius: 1.0,
-    gravity: 0.003,
-    damping: 0.999,
-    bounceDamping: 0.85,
-    swingAccelerationScale: 0.01
-};
 
 // Game state
 let gameStarted = false;
@@ -251,9 +252,9 @@ function launchBall() {
     if (indicator) {
         indicator.classList.remove('active');
         indicator.textContent = 'Hit registered!';
-        setTimeout(() => { 
+        setTimeout(() => {
             if (indicator.textContent === 'Hit registered!') {
-                indicator.textContent = 'Ready'; 
+                indicator.textContent = 'Ready';
             }
         }, 1000);
     }
@@ -466,16 +467,16 @@ function animate() {
         });
 
     updateInfo();
-    
+
     // Dual-camera rendering
     renderer.clear(); // Clear color and depth
-    
+
     // 1. Render Layer 1 (Perspective Floor)
     cameraPersp.layers.set(1);
     renderer.render(scene, cameraPersp);
-    
+
     renderer.clearDepth(); // Clear depth buffer so ortho objects render on top
-    
+
     // 2. Render Layer 0 (Orthographic Game Elements)
     camera.layers.set(0);
     renderer.render(scene, camera);
@@ -484,7 +485,7 @@ function animate() {
 // Handle window resize
 window.addEventListener('resize', () => {
     const aspect = window.innerWidth / window.innerHeight;
-    
+
     // Update Orthographic camera
     const frustumSize = 30;
     camera.left = -frustumSize * aspect / 2;
@@ -492,11 +493,11 @@ window.addEventListener('resize', () => {
     camera.top = frustumSize / 2;
     camera.bottom = -frustumSize / 2;
     camera.updateProjectionMatrix();
-    
+
     // Update Perspective camera
     cameraPersp.aspect = aspect;
     cameraPersp.updateProjectionMatrix();
-    
+
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
@@ -512,4 +513,4 @@ document.addEventListener('keypress', (e) => {
 // Initialize
 // Initialize
 setBallCount(0);
-animate();;
+animate();
