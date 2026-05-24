@@ -41,12 +41,6 @@ directionalLight.position.set(10, 15, 10);
 directionalLight.layers.enable(1); // Enable for Layer 1
 scene.add(directionalLight);
 
-// Grid
-let gridHelper = new THREE.GridHelper(50, 50, 0x8B7355, 0x8B7355);
-gridHelper.position.z = -10;
-gridHelper.layers.set(1); // Set to Layer 1
-scene.add(gridHelper);
-
 // Floor
 let floorGeometry = new THREE.PlaneGeometry(50, 50);
 
