@@ -10,7 +10,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .code-block {
@@ -59,13 +59,13 @@ body {
   display: flex;
   flex-direction: column; 
   gap: 12px;
-  margin: 20px 0;
+  margin: 5px 0 15px 0;
   max-width: 500px;
   max-height: 400px;
   overflow-y: auto; 
   /* We removed overflow-x: hidden; so the shadows don't get sliced off */
   /* Added padding to give the hover scale and 40px shadow room to breathe */
-  padding: 20px; 
+  padding: 10px 20px 20px 20px; 
   box-sizing: border-box; 
 }
 
@@ -159,6 +159,7 @@ body {
 
 .canvas-center h3 {
   margin-top: 0;
+  margin-bottom: 0;
   text-align: center;
   font-family: 'Syne', sans-serif;
   font-size: 24px; /* Larger header */
