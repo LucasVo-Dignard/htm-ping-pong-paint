@@ -2,11 +2,10 @@
 // Three.js Scene Setup
 let scene = new THREE.Scene();
 
-// ── CAMERA: wider FOV + much closer to the action ──────────────────────
 const aspect = window.innerWidth / window.innerHeight;
 const frustumSize = 30;
 
-// Orthographic camera for the game elements (Layer 0)
+// Orthographic
 let camera = new THREE.OrthographicCamera(
     frustumSize * aspect / -2,
     frustumSize * aspect / 2,
@@ -18,7 +17,7 @@ let camera = new THREE.OrthographicCamera(
 camera.position.set(0, 12, 5);
 camera.lookAt(0, 12, -14);
 
-// Perspective camera for the floor (Layer 1)
+// Perspective
 let cameraPersp = new THREE.PerspectiveCamera(70, aspect, 0.1, 1000);
 cameraPersp.position.set(0, 12, 5);
 cameraPersp.lookAt(0, 12, -14);
@@ -29,22 +28,19 @@ let renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 renderer.setClearColor(0xF5F0E8);
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.shadowMap.enabled = false;
-renderer.autoClear = false; // Disable autoClear for dual-camera rendering
+renderer.autoClear = false;
 
-// Lighting
 let ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-ambientLight.layers.enable(1); // Enable for Layer 1
+ambientLight.layers.enable(1);
 scene.add(ambientLight);
 
 let directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(10, 15, 10);
-directionalLight.layers.enable(1); // Enable for Layer 1
+directionalLight.layers.enable(1);
 scene.add(directionalLight);
 
-// Floor
 let floorGeometry = new THREE.PlaneGeometry(50, 50);
 
-// Load WoodFloor texture
 const textureLoader = new THREE.TextureLoader();
 const woodFloorTexture = textureLoader.load('/images/WoodFloor.png');
 woodFloorTexture.wrapS = THREE.RepeatWrapping;
@@ -57,12 +53,11 @@ let floorMaterial = new THREE.MeshStandardMaterial({
     metalness: 0
 });
 let floor = new THREE.Mesh(floorGeometry, floorMaterial);
-floor.rotation.x = -Math.PI / 2; // rotate flat
-floor.position.set(0, 0, -10);   // match gridHelper position
-floor.layers.set(1); // Set to Layer 1
+floor.rotation.x = -Math.PI / 2;
+floor.position.set(0, 0, -10);
+floor.layers.set(1); 
 scene.add(floor);
 
-// Walls
 const wallTextureCanvas = document.createElement('canvas');
 wallTextureCanvas.width = 512;
 wallTextureCanvas.height = 512;
@@ -110,13 +105,11 @@ createWall(50, WALL_HEIGHT, 0, WALL_HEIGHT / 2, WALL_BACK_Z, 0);
 createWall(WALL_DEPTH, WALL_HEIGHT, -WALL_HALF_WIDTH, WALL_HEIGHT / 2, WALL_BACK_Z + WALL_DEPTH / 2, Math.PI / 2);
 createWall(WALL_DEPTH, WALL_HEIGHT, WALL_HALF_WIDTH, WALL_HEIGHT / 2, WALL_BACK_Z + WALL_DEPTH / 2, -Math.PI / 2);
 
-// ── BOARD: bigger and closer so it fills the far end ───────────────────
 let BOARD_Z = -10;
-let BOARD_NEAR = 2.5;  // near bounce wall Z
+let BOARD_NEAR = 2.5;
 const BOARD_W = 40;
 const BOARD_H = 25;
 
-// Physics simulation (simplified)
 let ballPhysics = {
     pos: new THREE.Vector3(0, 4, BOARD_NEAR),
     vel: new THREE.Vector3(0, 0, 0),
@@ -127,10 +120,9 @@ let ballPhysics = {
     swingAccelerationScale: 0.01
 };
 
-// Create a canvas texture for the board
 const boardTextureCanvas = document.createElement('canvas');
-boardTextureCanvas.width = 1600;  // 4x resolution for better clarity
-boardTextureCanvas.height = 1000; // maintains 40:25 ratio
+boardTextureCanvas.width = 1600;
+boardTextureCanvas.height = 1000;
 const boardCtx = boardTextureCanvas.getContext('2d');
 boardCtx.fillStyle = '#f0f0f0';
 boardCtx.fillRect(0, 0, boardTextureCanvas.width, boardTextureCanvas.height);
@@ -149,11 +141,9 @@ let board = new THREE.Mesh(boardGeometry, boardMaterial);
 board.position.set(0, BOARD_H / 2, BOARD_Z);
 scene.add(board);
 
-// Camera is fixed at z=3; keep near wall always in front of it
 const CAMERA_Z = 3;
-const NEAR_WALL_MAX = CAMERA_Z - 0.5; // ball can get at most this close (z=2.5)
+const NEAR_WALL_MAX = CAMERA_Z - 0.5;
 
-// Ball
 let ballGeometry = new THREE.SphereGeometry(1.0, 32, 32);
 let ballMaterial = new THREE.MeshStandardMaterial({
     color: 0x000000,
@@ -202,7 +192,6 @@ function setBallCount(count) {
     while (balls.length > count) {
         removeBall(balls[balls.length - 1]);
     }
-    // Refresh UI
 }
 
 function getHittableBalls() {
@@ -216,28 +205,19 @@ function chooseRandomHittableBall() {
 }
 
 window.setBallCount = setBallCount;
-// Apply any pending count set by outline before script loaded
 if (window.__pendingBallCount !== undefined) {
     setBallCount(window.__pendingBallCount);
     delete window.__pendingBallCount;
 }
 
-// ── RAYCASTING for board clicks ──────────────────────────────────────────
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-// Create drawer service for the board texture
 const boardDrawerService = new InkDrawerService(boardTextureCanvas);
 
-
-// Game state
 let gameStarted = false;
 window.gameStarted = gameStarted;
 
 function startGame() {
     gameStarted = true;
     window.gameStarted = true;
-    // Ensure UI reflects the started state
     const indicator = document.getElementById('queuedIndicator');
     if (indicator) {
         indicator.classList.add('active');
@@ -245,7 +225,6 @@ function startGame() {
     }
 }
 
-// expose startGame globally so other scripts can call it
 window.startGame = startGame;
 
 const IDLE_THRESHOLD = 0.02;
@@ -254,7 +233,6 @@ const MAX_SPEED = 0.5;
 const SWING_ORIENTATION_SCALE = 1.2;
 const HITTING_ZONE_DEPTH = 3.0;
 
-// Swing variables
 let currentSwingSpeed = 50;
 let currentSwingAngleX = 0;
 let currentSwingAngleY = 0;
@@ -266,7 +244,6 @@ function updateSwing(speed, angleX, angleY) {
 }
 
 function launchBall() {
-    // Don't allow hits before the game has started
     if (!gameStarted) {
         return;
     }
@@ -332,26 +309,21 @@ function resetBall(ball) {
 }
 
 function drawSplashOnBoard(ballPos) {
-    // Convert ball's world position to board's local coordinates
     const boardCenterY = BOARD_H / 2;
     const localX = ballPos.x;
     const localY = ballPos.y - boardCenterY;
 
-    // Convert local coords to UV (0-1 range)
     const uvX = (localX + BOARD_W / 2) / BOARD_W;
     const uvY = (localY + BOARD_H / 2) / BOARD_H;
 
-    // Clamp to valid range
     if (uvX < 0 || uvX > 1 || uvY < 0 || uvY > 1) return;
 
 
-    // Convert UV to texture pixel coordinates
     const pixelX = uvX * boardTextureCanvas.width;
-    const pixelY = (1 - uvY) * boardTextureCanvas.height; // flip Y for canvas coords
+    const pixelY = (1 - uvY) * boardTextureCanvas.height;
 
-     // Single splash with random size variation
-    const baseSize = 25; // Bigger base splash size
-    const sizeVariation = baseSize * (0.7 + Math.random() * 0.6); // 70%-130% of base size
+    const baseSize = 25;
+    const sizeVariation = baseSize * (0.7 + Math.random() * 0.6);
     
     boardDrawerService.drawSplash(pixelX, pixelY, sizeVariation);
     boardCanvasTexture.needsUpdate = true;
@@ -455,7 +427,7 @@ const clock = new THREE.Clock();
 
 function animate() {
     requestAnimationFrame(animate);
-    const delta = clock.getDelta(); // seconds since last frame
+    const delta = clock.getDelta();
     updatePhysics(delta);
 
         balls.forEach((ball) => {
@@ -471,25 +443,20 @@ function animate() {
             ball.mesh.position.y -= ball.physics.radius * (1 - scale);
         });
 
-    // Dual-camera rendering
-    renderer.clear(); // Clear color and depth
+    renderer.clear();
 
-    // 1. Render Layer 1 (Perspective Floor)
     cameraPersp.layers.set(1);
     renderer.render(scene, cameraPersp);
 
-    renderer.clearDepth(); // Clear depth buffer so ortho objects render on top
+    renderer.clearDepth();
 
-    // 2. Render Layer 0 (Orthographic Game Elements)
     camera.layers.set(0);
     renderer.render(scene, camera);
 }
 
-// Handle window resize
 window.addEventListener('resize', () => {
     const aspect = window.innerWidth / window.innerHeight;
 
-    // Update Orthographic camera
     const frustumSize = 30;
     camera.left = -frustumSize * aspect / 2;
     camera.right = frustumSize * aspect / 2;
@@ -497,14 +464,12 @@ window.addEventListener('resize', () => {
     camera.bottom = -frustumSize / 2;
     camera.updateProjectionMatrix();
 
-    // Update Perspective camera
     cameraPersp.aspect = aspect;
     cameraPersp.updateProjectionMatrix();
 
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Keyboard input
 document.addEventListener('keypress', (e) => {
     if (e.key === 'd' || e.key === 'D') {
         if (!gameStarted) return;
@@ -515,8 +480,5 @@ document.addEventListener('keypress', (e) => {
     }
 });
 
-
-// Initialize
-// Initialize
 setBallCount(0);
 animate();

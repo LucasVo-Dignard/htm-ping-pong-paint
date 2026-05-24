@@ -13,11 +13,10 @@ const ClientType = Object.freeze({
   MOBILE: 'mobile'
 });
 
-const PORT = 3000; // Default HTTP port: 80, Default HTTPS port: 443, Server: 3000
+const PORT = 3000;
 
 const sessions = {}; // { code: {pcSocket: , mobileSockets: } }
 
-// Device detection middleware
 function detectDeviceType(req) {
   const userAgent = req.headers['user-agent'] || '';
   const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet|phone/i;
@@ -59,7 +58,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('join', (code) => {
-    if (!sessions[code]) { // If the code doesn't correspond to a session
+    if (!sessions[code]) {
       socket.emit('join_response', 'error');
       return;
     }
@@ -116,13 +115,6 @@ io.on('connection', (socket) => {
     if (session.pcSocket) {
       session.pcSocket.emit('material_select', data);
     }
-
-    // Broadcast to all other mobile clients in the room
-    session.mobileSockets.forEach((mobileSocket) => {
-      if (mobileSocket !== socket) {
-        mobileSocket.emit('material_selected_by_peer', data);
-      }
-    });
   });
 });
 
