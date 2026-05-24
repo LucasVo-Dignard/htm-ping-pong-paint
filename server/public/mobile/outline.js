@@ -15,6 +15,16 @@ const mobileOutline = {
       // register this client as "mobile"
       socket.emit('register', 'mobile');
 
+      const swingService = typeof SwingDetectonService !== 'undefined'
+        ? new SwingDetectonService()
+        : null;
+
+      if (swingService) {
+        swingService.setCallback((eventData) => {
+          socket.emit('swing', eventData);
+        });
+      }
+
       // helper: display a small status element in the card
       let statusEl = card.querySelector('.join-status');
       if (!statusEl) {
@@ -56,7 +66,11 @@ const mobileOutline = {
           setStatus(codeClean.length === 0 ? 'Room code is required.' : 'Enter exactly 4 letters.', false);
           return;
         }
-
+        if (swingService && !swingService.isRunning) {
+          swingService.start().catch((error) => {
+            console.warn('Could not start swing detection service:', error);
+          });
+        }
         setStatus('Joining...');
         socket.emit('join', codeClean);
       }
