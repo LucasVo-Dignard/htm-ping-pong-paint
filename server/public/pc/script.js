@@ -161,8 +161,6 @@ function updateSwing(speed, angleX, angleY) {
 function launchBall() {
     // Don't allow hits before the game has started
     if (!gameStarted) {
-        const statusBarEl = document.getElementById('statusBar');
-        if (statusBarEl) statusBarEl.textContent = 'Game not started • Press START';
         return;
     }
 
@@ -222,29 +220,6 @@ function resetScene() {
         indicator.textContent = 'Ready';
     }
     updateStatus();
-}
-
-function updateStatus() {
-    const statusBarEl = document.getElementById('statusBar');
-    if (statusBarEl) {
-        if (!gameStarted) {
-            statusBarEl.textContent = 'Game not started • Press START';
-        } else if (isFlying) {
-            statusBarEl.textContent = 'Ball in flight... Wait for it to return to the hitting zone';
-        } else {
-            statusBarEl.textContent = 'Ready • Press Space or Enter to begin';
-        }
-    }
-
-    const infoStatusEl = document.getElementById('infoStatus');
-    if (infoStatusEl) infoStatusEl.textContent = isFlying ? 'Flying' : 'Idle';
-}
-
-function updateInfo() {
-    let speed = ballPhysics.vel.length();
-    document.getElementById('infoZ').textContent = Math.abs(ballPhysics.pos.z).toFixed(1);
-    document.getElementById('infoSpeed').textContent = speed.toFixed(2);
-    document.getElementById('infoY').textContent = ballPhysics.pos.y.toFixed(2);
 }
 
 function drawSplashOnBoard(ballPos) {
