@@ -15,6 +15,15 @@ const mobileOutline = {
       // register this client as "mobile"
       socket.emit('register', 'mobile');
 
+      // helper function to send hit data
+      window.send_hit = function(hitData) {
+        if (!socket) {
+          console.warn('Socket not connected');
+          return;
+        }
+        socket.emit('hit', hitData);
+      };
+
       // helper: display a small status element in the card
       let statusEl = card.querySelector('.join-status');
       if (!statusEl) {
