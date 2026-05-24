@@ -8,6 +8,7 @@ class SwingDetectionService {
     this.isRunning = false;
     this.isSwingArmed = true;
     this.lastSwingAt = 0;
+    this.alphaOffset = null; // calibration: first alpha reading becomes "zero"
     this.orientation = {
       alpha: 0,
       beta: 0,
@@ -53,6 +54,7 @@ class SwingDetectionService {
 
     await this.requestPermission();
 
+    this.alphaOffset = null; // reset calibration on each start
     window.addEventListener('devicemotion', this.onMotion);
     window.addEventListener('deviceorientation', this.onOrientation);
     this.isRunning = true;
@@ -75,7 +77,10 @@ class SwingDetectionService {
 
   getDirectionVector() {
     const degToRad = Math.PI / 180;
-    const a = (this.orientation.alpha || 0) * degToRad;
+    // Subtract the calibration offset so the initial facing direction = 0
+    const rawAlpha = this.orientation.alpha || 0;
+    const calibratedAlpha = rawAlpha - (this.alphaOffset || 0);
+    const a = calibratedAlpha * degToRad;
     const b = (this.orientation.beta || 0) * degToRad;
     const g = (this.orientation.gamma || 0) * degToRad;
 
@@ -142,6 +147,11 @@ class SwingDetectionService {
 
   onOrientation(event) {
     if (event.alpha === null) return;
+
+    // Capture the first alpha reading as the "zero" reference
+    if (this.alphaOffset === null) {
+      this.alphaOffset = event.alpha;
+    }
 
     this.orientation = {
       alpha: event.alpha ?? 0,

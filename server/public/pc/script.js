@@ -88,30 +88,6 @@ scene.add(board);
 const CAMERA_Z = 3;
 const NEAR_WALL_MAX = CAMERA_Z - 0.5; // ball can get at most this close (z=2.5)
 
-function updateBoard() {
-    const nearEl = document.getElementById('boardNear');
-    const farEl = document.getElementById('boardFar');
-    if (!nearEl || !farEl) return; // controls removed — nothing to update
-
-    const nearVal = parseFloat(nearEl.value);
-    const farVal = parseFloat(farEl.value);
-
-    if (isNaN(nearVal) || isNaN(farVal)) return;
-    if (nearVal <= farVal) return; // still typing, ignore
-
-    // Clamp near so ball never passes behind the camera
-    BOARD_NEAR = Math.min(nearVal, NEAR_WALL_MAX);
-    BOARD_Z = farVal;
-
-    // Move the board mesh
-    board.position.z = BOARD_Z;
-
-    // If ball isn't flying, snap it to new near position
-    if (!isFlying) {
-        ballPhysics.pos.z = BOARD_NEAR;
-    }
-}
-
 // Ball
 let ballGeometry = new THREE.SphereGeometry(1.0, 32, 32);
 let ballMaterial = new THREE.MeshStandardMaterial({
@@ -161,21 +137,7 @@ function updateSwing(speed, angleX, angleY) {
     if (speed !== undefined) currentSwingSpeed = speed;
     if (angleX !== undefined) currentSwingAngleX = angleX;
     if (angleY !== undefined) currentSwingAngleY = angleY;
-    
-    const speedInput = document.getElementById('speed');
-    if (speedInput) speedInput.value = currentSwingSpeed;
-    
-    const angleXInput = document.getElementById('angleX');
-    if (angleXInput) angleXInput.value = currentSwingAngleX;
-    
-    const angleYInput = document.getElementById('angleY');
-    if (angleYInput) angleYInput.value = currentSwingAngleY;
 }
-
-// Update variables if user types into the inputs
-document.getElementById('speed')?.addEventListener('input', (e) => currentSwingSpeed = parseFloat(e.target.value) || 0);
-document.getElementById('angleX')?.addEventListener('input', (e) => currentSwingAngleX = parseFloat(e.target.value) || 0);
-document.getElementById('angleY')?.addEventListener('input', (e) => currentSwingAngleY = parseFloat(e.target.value) || 0);
 
 function launchBall() {
     // Prevent launching if ball is currently hidden (respawning)
