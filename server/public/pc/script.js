@@ -392,10 +392,7 @@ function updatePhysics(delta) {
     balls.forEach(ball => updateBallPhysics(ball, delta));
 }
 
-
-
 const clock = new THREE.Clock();
-
 
 function animate() {
     requestAnimationFrame(animate);
