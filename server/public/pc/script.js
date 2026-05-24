@@ -49,7 +49,19 @@ scene.add(gridHelper);
 
 // Floor
 let floorGeometry = new THREE.PlaneGeometry(50, 50);
-let floorMaterial = new THREE.MeshStandardMaterial({ color: 0xA73F2A });
+
+// Load WoodFloor texture
+const textureLoader = new THREE.TextureLoader();
+const woodFloorTexture = textureLoader.load('/images/WoodFloor.png');
+woodFloorTexture.wrapS = THREE.RepeatWrapping;
+woodFloorTexture.wrapT = THREE.RepeatWrapping;
+woodFloorTexture.repeat.set(4, 4);
+
+let floorMaterial = new THREE.MeshStandardMaterial({
+    map: woodFloorTexture,
+    roughness: 0.7,
+    metalness: 0
+});
 let floor = new THREE.Mesh(floorGeometry, floorMaterial);
 floor.rotation.x = -Math.PI / 2; // rotate flat
 floor.position.set(0, 0, -10);   // match gridHelper position
