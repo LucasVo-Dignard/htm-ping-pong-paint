@@ -218,6 +218,12 @@ function resetScene() {
     ballPhysics.vel.set(0, 0, 0);
     isFlying = false;
     ballMesh.visible = true;
+    
+    if (idleTimer) {
+        clearTimeout(idleTimer);
+        idleTimer = null;
+    }
+
     let indicator = document.getElementById('queuedIndicator');
     if (indicator) {
         indicator.classList.remove('active');
@@ -337,7 +343,7 @@ function updatePhysics(delta) {
             
             setTimeout(() => {
                 resetScene();
-            }, 500); // 500ms delay before random respawn
+            }, 250); // 250ms delay before random respawn
         }
         lastBoardCollisionZ = ballPhysics.pos.z;
         ballPhysics.pos.z = BOARD_Z;
