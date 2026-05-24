@@ -118,6 +118,25 @@ let ballPhysics = {
     swingAccelerationScale: 0.01
 };
 
+// Game state
+let gameStarted = false;
+window.gameStarted = gameStarted;
+
+function startGame() {
+    gameStarted = true;
+    window.gameStarted = true;
+    // Ensure UI reflects the started state
+    const indicator = document.getElementById('queuedIndicator');
+    if (indicator) {
+        indicator.classList.add('active');
+        indicator.textContent = 'Ready';
+    }
+    updateStatus();
+}
+
+// expose startGame globally so other scripts can call it
+window.startGame = startGame;
+
 const IDLE_THRESHOLD = 0.02;
 const IDLE_RESET_DELAY = 2000;
 const MAX_SPEED = 0.5;
@@ -140,6 +159,13 @@ function updateSwing(speed, angleX, angleY) {
 }
 
 function launchBall() {
+    // Don't allow hits before the game has started
+    if (!gameStarted) {
+        const statusBarEl = document.getElementById('statusBar');
+        if (statusBarEl) statusBarEl.textContent = 'Game not started • Press START';
+        return;
+    }
+
     // Prevent launching if ball is currently hidden (respawning)
     if (!ballMesh.visible) return;
 
@@ -201,7 +227,9 @@ function resetScene() {
 function updateStatus() {
     const statusBarEl = document.getElementById('statusBar');
     if (statusBarEl) {
-        if (isFlying) {
+        if (!gameStarted) {
+            statusBarEl.textContent = 'Game not started • Press START';
+        } else if (isFlying) {
             statusBarEl.textContent = 'Ball in flight... Wait for it to return to the hitting zone';
         } else {
             statusBarEl.textContent = 'Ready • Press Space or Enter to begin';
