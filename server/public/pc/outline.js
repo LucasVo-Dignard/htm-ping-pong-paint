@@ -4,6 +4,89 @@ const statusText = document.getElementById('status-text');
 const codeBlock = document.getElementById('code-block');
 const startBtn = document.getElementById('start-btn');
 let currentCode = '';
+let selectedCanvasUrl = null; // null represents the blank canvas
+
+async function loadCanvasOptions() {
+  const imageGrid = document.getElementById('image-grid');
+  if (!imageGrid) return;
+
+  // 1. Create Blank Canvas Option
+  const blankDiv = document.createElement('div');
+  blankDiv.className = 'canvas-option selected';
+  blankDiv.innerHTML = `<div class="canvas-info" style="margin-left:auto; margin-right:auto;"><strong>Blank Canvas</strong></div>`;
+  blankDiv.addEventListener('click', () => {
+    document.querySelectorAll('.canvas-option').forEach(el => el.classList.remove('selected'));
+    blankDiv.classList.add('selected');
+    selectedCanvasUrl = null;
+  });
+  imageGrid.appendChild(blankDiv);
+
+  // 2. Fetch and populate Image Options
+  try {
+    const response = await fetch('/images/info.json');
+    const data = await response.json();
+    
+    let images = [];
+    if (Array.isArray(data)) {
+      images = data;
+    } else {
+      // Search for any top-level key that contains an array (like "paintings")
+      const foundArray = Object.values(data).find(val => Array.isArray(val));
+      if (foundArray) {
+        images = foundArray;
+      } else {
+        // Fallback for { "01.webp": { "title": "..." } } dictionary style
+        images = Object.entries(data).map(([key, val]) => ({
+          filename: key,
+          ...(typeof val === 'object' ? val : { value: val })
+        }));
+      }
+    }
+    
+    images.forEach(imgData => {
+      // Find the file name dynamically
+      const imgName = imgData.file || imgData.filename || imgData.src; 
+      if (!imgName) return; // Skip if no image file is found
+
+      const imgUrl = `/images/files/${imgName}`;
+      
+      const imgDiv = document.createElement('div');
+      imgDiv.className = 'canvas-option';
+      
+      const imgEl = document.createElement('img');
+      imgEl.src = imgUrl;
+      imgEl.alt = imgData.title || imgName;
+      
+      // Build details text (filtering out objects and filename keys)
+      const detailsHtml = Object.entries(imgData)
+        .filter(([key, value]) => {
+           return !['file', 'filename', 'src'].includes(key) && typeof value !== 'object';
+        })
+        .map(([key, value]) => `<div><strong>${key}:</strong> ${value}</div>`)
+        .join('');
+
+      const infoDiv = document.createElement('div');
+      infoDiv.className = 'canvas-info';
+      infoDiv.innerHTML = detailsHtml || `<div><strong>File:</strong> ${imgName}</div>`;
+      
+      imgDiv.appendChild(imgEl);
+      imgDiv.appendChild(infoDiv);
+      
+      imgDiv.addEventListener('click', () => {
+        document.querySelectorAll('.canvas-option').forEach(el => el.classList.remove('selected'));
+        imgDiv.classList.add('selected');
+        selectedCanvasUrl = imgUrl;
+      });
+      
+      imageGrid.appendChild(imgDiv);
+    });
+  } catch (error) {
+    console.error('Error loading image options:', error);
+  }
+}
+
+// Initialize options
+loadCanvasOptions();
 
 async function copyRoomCode() {
   if (!currentCode || !codeBlock) return;
