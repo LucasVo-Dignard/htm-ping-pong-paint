@@ -451,6 +451,13 @@ document.addEventListener('keypress', (e) => {
         e.preventDefault();
         launchBall();
     }
+    if (e.key === 'd' || e.key === 'D') {
+        if (!gameStarted) return;
+        const link = document.createElement('a');
+        link.download = 'painting.png';
+        link.href = boardTextureCanvas.toDataURL('image/png');
+        link.click();
+    }
 });
 
 
