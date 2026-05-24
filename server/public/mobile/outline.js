@@ -43,6 +43,9 @@ const mobileOutline = {
       // elements
       const input = document.getElementById('code-input') || document.querySelector('input[name="code"]');
       const joinBtn = document.getElementById('join-btn') || card.querySelector('button.join-btn');
+      const materialsGroup = document.getElementById('materials-group');
+      const materialBtns = document.querySelectorAll('.material-btn');
+
 
       function validateRoomCode(value) {
         return /^[A-Z]{4}$/.test(value);
@@ -97,6 +100,15 @@ const mobileOutline = {
           setStatus('Joined — waiting for game', true);
           if (input) input.disabled = true;
           if (joinBtn) joinBtn.disabled = true;
+          if (materialsGroup) materialsGroup.style.display = 'block';
+
+          // Wire material buttons to emit socket message
+          materialBtns.forEach((btn) => {
+            btn.addEventListener('click', () => {
+              const material = btn.getAttribute('data-material');
+              socket.emit('material_select', { material });
+            });
+          });
         } else { // 'error' (or any unexpected value)
           setStatus('Failed to join — invalid code', false);
         }
