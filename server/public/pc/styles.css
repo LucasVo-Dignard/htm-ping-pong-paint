@@ -122,3 +122,104 @@ body {
   border-color: #00ff88;
   background-color: #1a1a1a;
 }
+
+/* 3-Column Interactive Section - Neutral & Readable */
+.lobby-interactive-section {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px; /* Increased gap to accommodate larger panels */
+  width: 100%;
+  max-width: 1400px; /* Widened to let the bigger text fit nicely */
+  padding: 0 20px;
+  box-sizing: border-box;
+  font-family: 'Syne', sans-serif; /* Cleaner, more modern font */
+}
+
+/* The side instruction panels */
+.instruction-side {
+  flex: 1; 
+  max-width: 420px; /* Allowed to be wider for bigger text */
+  background: rgba(255, 255, 255, 0.05); /* A subtle, neutral grey transparency */
+  border: 1px solid rgba(255, 255, 255, 0.15); /* Clean, simple border */
+  border-radius: 12px;
+  padding: 30px; /* More breathing room */
+  box-sizing: border-box;
+  font-size: 18px; /* Significantly larger text for distance reading */
+  color: #eaeaea; /* Soft neutral white */
+  line-height: 1.6;
+}
+
+.canvas-center {
+  flex: 0 0 auto; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.canvas-center h3 {
+  margin-top: 0;
+  text-align: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 24px; /* Larger header */
+  font-weight: 400; /* Less aggressive font weight */
+  color: #ffffff;
+}
+
+/* Standard Header Styling */
+.lang-title {
+  margin: 0 0 20px 0;
+  font-size: 20px; /* Larger language titles */
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #ffffff; 
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Clean separator line */
+  padding-bottom: 15px;
+}
+
+.instruction-side ul {
+  margin: 0;
+  padding-left: 20px; /* Slightly more indent for bigger bullets */
+  list-style-type: disc; /* Standard neutral circles instead of squares */
+}
+
+.instruction-side li {
+  margin-bottom: 20px; 
+  color: rgba(255, 255, 255, 0.85);
+  
+  /* NEW: Force the line-height directly on the text itself */
+  line-height: 1.8; 
+  
+  /* Optional: If it still looks cut off, padding-bottom can give the last line extra room */
+  padding-bottom: 2px; 
+}
+
+
+.instruction-side strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* Mobile & Tablet Responsiveness */
+/* Triggered earlier (1024px) because the text and panels are wider now */
+@media (max-width: 1024px) {
+  .lobby-interactive-section {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .instruction-side {
+    max-width: 600px; /* Let panels expand on a vertical layout */
+    width: 100%;
+    margin-bottom: 30px; 
+  }
+
+  /* Force the Canvas to sit at the top on mobile */
+  .canvas-center {
+    order: -1; 
+    margin-bottom: 40px;
+  }
+}
