@@ -117,10 +117,11 @@ let ballPhysics = {
     radius: 0.2,
     gravity: 0.003,
     damping: 0.999,
-    bounceDamping: 0.85
+    bounceDamping: 0.85,
+    swingAccelerationScale: 0.005
 };
 
-const IDLE_THRESHOLD = 0.05;
+const IDLE_THRESHOLD = 0.02;
 const IDLE_RESET_DELAY = 2000;
 const MAX_SPEED = 1;
 let idleTimer = null;
@@ -137,7 +138,7 @@ function launchBall() {
 
     if (isFlying) return;
 
-    let speed = (parseFloat(document.getElementById('speed').value) || 10) * 0.01;
+    let speed = (parseFloat(document.getElementById('speed').value) || 10) * ballPhysics.swingAccelerationScale;
     let angleX = (parseFloat(document.getElementById('angleX').value) || 0) * Math.PI / 180;
     let angleY = (parseFloat(document.getElementById('angleY').value) || 0) * Math.PI / 180;
 
