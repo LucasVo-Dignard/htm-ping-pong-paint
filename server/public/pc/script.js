@@ -4,9 +4,13 @@ let scene = new THREE.Scene();
 scene.background = new THREE.Color(0xF5F0E8);
 
 // ── CAMERA: wider FOV + much closer to the action ──────────────────────
-let camera = new THREE.PerspectiveCamera(
-    70,                            // wider FOV for immersive feel
-    window.innerWidth / window.innerHeight,
+const aspect = window.innerWidth / window.innerHeight;
+const frustumSize = 30;
+let camera = new THREE.OrthographicCamera(
+    frustumSize * aspect / -2,
+    frustumSize * aspect / 2,
+    frustumSize / 2,
+    frustumSize / -2,
     0.1,
     1000
 );
@@ -112,7 +116,7 @@ const boardDrawerService = new InkDrawerService(boardTextureCanvas);
 
 // Physics simulation (simplified)
 let ballPhysics = {
-    pos: new THREE.Vector3(0, 10, BOARD_NEAR),
+    pos: new THREE.Vector3(0, 16, BOARD_NEAR),
     vel: new THREE.Vector3(0, 0, 0),
     radius: 0.2,
     gravity: 0.003,
@@ -323,13 +327,17 @@ function animate() {
     ballMesh.position.copy(ballPhysics.pos);
 
     updateInfo();
-    updateBallIndicator();
     renderer.render(scene, camera);
 }
 
 // Handle window resize
 window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    const aspect = window.innerWidth / window.innerHeight;
+    const frustumSize = 30;
+    camera.left = -frustumSize * aspect / 2;
+    camera.right = frustumSize * aspect / 2;
+    camera.top = frustumSize / 2;
+    camera.bottom = -frustumSize / 2;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
@@ -342,37 +350,7 @@ document.addEventListener('keypress', (e) => {
     }
 });
 
-function updateBallIndicator() {
-    const indicator = document.getElementById('ballIndicator');
-
-    // Project ball 3D position to 2D screen space
-    const pos = ballMesh.position.clone();
-    pos.project(camera);
-
-    const screenX = (pos.x * 0.5 + 0.5) * window.innerWidth;
-    const screenY = (-pos.y * 0.5 + 0.5) * window.innerHeight;
-
-    const margin = 36;
-    const inBounds =
-        screenX >= margin && screenX <= window.innerWidth - margin &&
-        screenY >= margin && screenY <= window.innerHeight - margin &&
-        pos.z <= 1; // in front of camera
-
-    if (!isFlying || inBounds) {
-        indicator.style.display = 'none';
-        return;
-    }
-
-    // Clamp to screen edges
-    const clampedX = Math.max(margin, Math.min(window.innerWidth - margin, screenX));
-    const clampedY = Math.max(margin, Math.min(window.innerHeight - margin, screenY));
-
-    indicator.style.display = 'flex';
-    indicator.style.left = (clampedX - 18) + 'px';
-    indicator.style.top = (clampedY - 18) + 'px';
-}
-
 
 // Initialize
 resetScene();
-animate();
+animate();;
