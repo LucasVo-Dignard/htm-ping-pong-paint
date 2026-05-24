@@ -89,8 +89,12 @@ const CAMERA_Z = 3;
 const NEAR_WALL_MAX = CAMERA_Z - 0.5; // ball can get at most this close (z=2.5)
 
 function updateBoard() {
-    const nearVal = parseFloat(document.getElementById('boardNear').value);
-    const farVal = parseFloat(document.getElementById('boardFar').value);
+    const nearEl = document.getElementById('boardNear');
+    const farEl = document.getElementById('boardFar');
+    if (!nearEl || !farEl) return; // controls removed — nothing to update
+
+    const nearVal = parseFloat(nearEl.value);
+    const farVal = parseFloat(farEl.value);
 
     if (isNaN(nearVal) || isNaN(farVal)) return;
     if (nearVal <= farVal) return; // still typing, ignore
@@ -218,6 +222,12 @@ function resetScene() {
     ballPhysics.vel.set(0, 0, 0);
     isFlying = false;
     ballMesh.visible = true;
+    
+    if (idleTimer) {
+        clearTimeout(idleTimer);
+        idleTimer = null;
+    }
+
     let indicator = document.getElementById('queuedIndicator');
     if (indicator) {
         indicator.classList.remove('active');
@@ -227,15 +237,17 @@ function resetScene() {
 }
 
 function updateStatus() {
-    let launchBtn = document.getElementById('launchBtn');
-    if (isFlying) {
-        document.getElementById('statusBar').textContent = 'Ball in flight... Wait for it to return to the hitting zone';
-        launchBtn.textContent = 'WAIT';
-    } else {
-        document.getElementById('statusBar').textContent = 'Ready • Press LAUNCH to begin';
-        launchBtn.textContent = '▶ LAUNCH';
+    const statusBarEl = document.getElementById('statusBar');
+    if (statusBarEl) {
+        if (isFlying) {
+            statusBarEl.textContent = 'Ball in flight... Wait for it to return to the hitting zone';
+        } else {
+            statusBarEl.textContent = 'Ready • Press Space or Enter to begin';
+        }
     }
-    document.getElementById('infoStatus').textContent = isFlying ? 'Flying' : 'Idle';
+
+    const infoStatusEl = document.getElementById('infoStatus');
+    if (infoStatusEl) infoStatusEl.textContent = isFlying ? 'Flying' : 'Idle';
 }
 
 function updateInfo() {
@@ -337,7 +349,7 @@ function updatePhysics(delta) {
             
             setTimeout(() => {
                 resetScene();
-            }, 500); // 500ms delay before random respawn
+            }, 250); // 250ms delay before random respawn
         }
         lastBoardCollisionZ = ballPhysics.pos.z;
         ballPhysics.pos.z = BOARD_Z;
