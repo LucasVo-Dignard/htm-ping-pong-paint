@@ -120,6 +120,11 @@ let ballPhysics = {
     bounceDamping: 0.85
 };
 
+const IDLE_THRESHOLD = 0.02;
+const IDLE_RESET_DELAY = 2000;
+const MAX_SPEED = 1;
+let idleTimer = null;
+
 let isFlying = false;
 let queuedInput = null;
 let lastBoardCollisionZ = null;  // Track last collision to avoid duplicate splashes
@@ -206,10 +211,6 @@ function drawSplashOnBoard(ballPos) {
 
 function updatePhysics(delta) {
 
-    const IDLE_THRESHOLD = 0.02;
-    const IDLE_RESET_DELAY = 2000;
-    let idleTimer = null;
-
     if (!isFlying) return;
 
     const t = delta * 60; // normalize to 60fps
@@ -219,6 +220,12 @@ function updatePhysics(delta) {
 
     // Damping
     ballPhysics.vel.multiplyScalar(Math.pow(ballPhysics.damping, t));
+
+
+    //Cap speed
+    if(ballPhysics.vel.length() > MAX_SPEED) {
+        ballPhysics.vel.normalize().multiplyScalar(MAX_SPEED);
+    }
 
     // Kill horizontal movement if too slow, but keep gravity
     if (Math.abs(ballPhysics.vel.x) < 0.01) ballPhysics.vel.x = 0;
