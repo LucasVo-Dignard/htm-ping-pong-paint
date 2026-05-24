@@ -15,13 +15,13 @@ const mobileOutline = {
       // register this client as "mobile"
       socket.emit('register', 'mobile');
 
-      const swingService = typeof SwingDetectonService !== 'undefined'
-        ? new SwingDetectonService()
+      const swingService = typeof SwingDetectionService !== 'undefined'
+        ? new SwingDetectionService()
         : null;
 
       if (swingService) {
         swingService.setCallback((eventData) => {
-          socket.emit('swing', eventData);
+          socket.emit('hit', eventData);
         });
       }
 
