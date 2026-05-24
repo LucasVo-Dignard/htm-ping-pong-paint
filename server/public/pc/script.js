@@ -118,7 +118,7 @@ let ballPhysics = {
     gravity: 0.003,
     damping: 0.999,
     bounceDamping: 0.85,
-    swingAccelerationScale: 0.005
+    swingAccelerationScale: 0.01
 };
 
 const IDLE_THRESHOLD = 0.02;
