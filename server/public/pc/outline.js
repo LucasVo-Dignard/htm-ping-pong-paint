@@ -57,17 +57,15 @@ async function loadCanvasOptions() {
       imgEl.src = imgUrl;
       imgEl.alt = imgData.title || imgName;
       
-      // Build details text (filtering out objects and filename keys)
-      const detailsHtml = Object.entries(imgData)
-        .filter(([key, value]) => {
-           return !['file', 'filename', 'src'].includes(key) && typeof value !== 'object';
-        })
-        .map(([key, value]) => `<div><strong>${key}:</strong> ${value}</div>`)
-        .join('');
+      // Extract data with fallbacks for common JSON keys
+      const pName = imgData.paintingName || imgData.title || imgData.name || 'Unknown Title';
+      const pArtist = imgData.paintingArtist || imgData.artist || imgData.author || 'Unknown Artist';
+      const pDate = imgData.date || imgData.year || 'N/A';
 
       const infoDiv = document.createElement('div');
       infoDiv.className = 'canvas-info';
-      infoDiv.innerHTML = detailsHtml || `<div><strong>File:</strong> ${imgName}</div>`;
+      // Apply the template format: {paintingName} - {paintingArtist} ({date})
+      infoDiv.innerHTML = `<div><strong>${pName}</strong> - ${pArtist} (${pDate})</div>`;
       
       imgDiv.appendChild(imgEl);
       imgDiv.appendChild(infoDiv);
