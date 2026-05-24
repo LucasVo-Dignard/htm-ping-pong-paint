@@ -14,7 +14,7 @@ let camera = new THREE.OrthographicCamera(
     0.1,
     1000
 );
-camera.position.set(0, 10, 5);
+camera.position.set(0, 14, 5);
 camera.lookAt(0, 10, -14);
 
 const canvas = document.getElementById('canvas');
