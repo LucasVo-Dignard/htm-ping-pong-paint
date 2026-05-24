@@ -49,6 +49,7 @@ const MAX_SPLAT_SIZE = 100;
       this.autoIndex = 0;
       this.resizeObserver = null;
       this._onPointerEvent = this._onPointerEvent.bind(this);
+      this.pixelService = new PixelConvolutionService();
     }
 
     init() {
@@ -68,9 +69,30 @@ const MAX_SPLAT_SIZE = 100;
 
     drawSplash(x, y, size) {
       const newY = y + HIT_Y_OFFSET;
-      const color = this.activeColor || this._getNextColor();
-      const [r, g, b] = hexToRgb(color);
-      
+      let r, g, b;
+
+      if (window.selectedCanvasUrl) {
+        this.pixelService.prepareImage(window.selectedCanvasUrl);
+
+        const normX = x / this.canvas.width;
+        const normY = newY / this.canvas.height;
+        const imgTargetX = Math.round(normX * this.pixelService.imgWidth);
+        const imgTargetY = Math.round(normY * this.pixelService.imgHeight);
+
+        const avgColor = this.pixelService.getAveragePixelColorSync(window.selectedCanvasUrl, imgTargetX, imgTargetY);
+        
+        if (avgColor) {
+          r = avgColor.r; g = avgColor.g; b = avgColor.b;
+        } else {
+          // Fallback while loading
+          const color = this.activeColor || this._getNextColor();
+          [r, g, b] = hexToRgb(color);
+        }
+      } else {
+        const color = this.activeColor || this._getNextColor();
+        [r, g, b] = hexToRgb(color);
+      }
+
       let radius;
       if (typeof size === 'number') {
         // Map linearly from [17.5, 32.5] (expected sizeVariation range from script.js)
@@ -83,7 +105,6 @@ const MAX_SPLAT_SIZE = 100;
       } else {
         radius = MIN_SPLAT_SIZE + Math.random() * (MAX_SPLAT_SIZE - MIN_SPLAT_SIZE);
       }
-
       this._drawFilaments(x, newY, radius, r, g, b);
       this._drawDroplets(x, newY, radius, 12 + Math.floor(Math.random() * 8), r, g, b);
       this._drawRim(x, newY, radius, r, g, b);
