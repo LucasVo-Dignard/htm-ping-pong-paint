@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>iOS Motion Sensors — Console Output</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #111;
+      color: white;
+    }
+
+    .box {
+      background: #222;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+    }
+
+    .value {
+      color: #4caf50;
+      font-weight: bold;
+    }
+
+    .scene {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 30px;
+      perspective: 600px;
+    }
+
+    #gyroRect {
+      width: 200px;
+      height: 120px;
+      background: linear-gradient(135deg, #4caf50, #1a73e8);
+      border-radius: 12px;
+      transform-style: preserve-3d;
+      transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+      transition: transform 0.05s linear;
+      box-shadow: 0 0 30px rgba(76, 175, 80, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: white;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>iOS Gyroscope & Accelerometer (Console)</h1>
+
+  <button id="startButton">Enable Sensors</button>
+
+  <div class="scene">
+    <div id="gyroRect">GYROSCOPE</div>
+  </div>
+
+  <div class="box">
+    <h2>Accelerometer</h2>
+    <p>X: <span class="value" id="accX">0</span></p>
+    <p>Y: <span class="value" id="accY">0</span></p>
+    <p>Z: <span class="value" id="accZ">0</span></p>
+  </div>
+
+  <div class="box">
+    <h2>Gyroscope / Orientation</h2>
+    <p>Alpha: <span class="value" id="gyroAlpha">0</span></p>
+    <p>Beta: <span class="value" id="gyroBeta">0</span></p>
+    <p>Gamma: <span class="value" id="gyroGamma">0</span></p>
+  </div>
+
+  <script>
+    const startButton = document.getElementById("startButton");
+    const gyroRect = document.getElementById("gyroRect");
+
+    let currentOrientation = { alpha: 0, beta: 0, gamma: 0 };
+
+    function logGyroVector() {
+      const { alpha, beta, gamma } = currentOrientation;
+      const bRad = beta  * Math.PI / 180;
+      const gRad = gamma * Math.PI / 180;
+      const vx = Math.sin(gRad);
+      const vy = -Math.sin(bRad) * Math.cos(gRad);
+      const vz = Math.cos(bRad) * Math.cos(gRad);
+
+      console.log(`Gyro vector -> (vx: ${vx.toFixed(3)}, vy: ${vy.toFixed(3)}, vz: ${vz.toFixed(3)})`, { alpha, beta, gamma });
+    }
+
+    async function requestSensorAccess() {
+      if (
+        typeof DeviceMotionEvent !== "undefined" &&
+        typeof DeviceMotionEvent.requestPermission === "function"
+      ) {
+        try {
+          const motionPermission = await DeviceMotionEvent.requestPermission();
+          const orientationPermission = await DeviceOrientationEvent.requestPermission();
+
+          if (motionPermission === "granted" && orientationPermission === "granted") {
+            startSensors();
+          } else {
+            alert("Permission denied.");
+          }
+        } catch (error) {
+          console.error(error);
+          alert("Error requesting permissions.");
+        }
+      } else {
+        startSensors();
+      }
+    }
+
+    function startSensors() {
+
+      // Accelerometer
+      window.addEventListener("devicemotion", (event) => {
+        const acc = event.accelerationIncludingGravity;
+        const x = acc.x ?? 0;
+        const y = acc.y ?? 0;
+        const z = acc.z ?? 0;
+
+        document.getElementById("accX").textContent = x.toFixed(2);
+        document.getElementById("accY").textContent = y.toFixed(2);
+        document.getElementById("accZ").textContent = z.toFixed(2);
+
+        // keep the accelerometer threshold — log vector when exceeded
+        if (Math.abs(z) > 16) {
+          logGyroVector();
+        }
+      });
+
+      // Gyroscope / orientation + rectangle rotation
+      window.addEventListener("deviceorientation", (event) => {
+        const alpha = event.alpha ?? 0;
+        const beta  = event.beta  ?? 0;
+        const gamma = event.gamma ?? 0;
+
+        currentOrientation = { alpha, beta, gamma };
+
+        document.getElementById("gyroAlpha").textContent = alpha.toFixed(2);
+        document.getElementById("gyroBeta").textContent  = beta.toFixed(2);
+        document.getElementById("gyroGamma").textContent = gamma.toFixed(2);
+
+        // beta  = tilt forward/back  → rotateX
+        // gamma = tilt left/right    → rotateY
+        // alpha = compass heading    → rotateZ
+        gyroRect.style.transform =
+          `rotateX(${beta}deg) rotateY(${gamma}deg) rotateZ(${alpha}deg)`;
+      });
+
+      console.log("Sensors started — will log gyro vector on accel threshold.");
+    }
+
+    startButton.addEventListener("click", requestSensorAccess);
+  </script>
+
+</body>
+</html>
