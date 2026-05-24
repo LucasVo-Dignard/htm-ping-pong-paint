@@ -64,7 +64,7 @@ let boardMaterial = new THREE.MeshStandardMaterial({
     roughness: 0.2
 });
 let board = new THREE.Mesh(boardGeometry, boardMaterial);
-board.position.set(0, BOARD_H / 2 - 4, BOARD_Z);
+board.position.set(0, BOARD_H / 2 + 5, BOARD_Z);
 scene.add(board);
 
 // Camera is fixed at z=3; keep near wall always in front of it
@@ -112,7 +112,7 @@ const boardDrawerService = new InkDrawerService(boardTextureCanvas);
 
 // Physics simulation (simplified)
 let ballPhysics = {
-    pos: new THREE.Vector3(0, 10, BOARD_NEAR),
+    pos: new THREE.Vector3(0, 16, BOARD_NEAR),
     vel: new THREE.Vector3(0, 0, 0),
     radius: 0.2,
     gravity: 0.003,
@@ -161,7 +161,7 @@ function queueInput() {
 }
 
 function resetScene() {
-    ballPhysics.pos.set(0, 10, BOARD_NEAR);
+    ballPhysics.pos.set(0, 16, BOARD_NEAR);
     ballPhysics.vel.set(0, 0, 0);
     isFlying = false;
     queuedInput = null;
@@ -191,7 +191,7 @@ function updateInfo() {
 
 function drawSplashOnBoard(ballPos) {
     // Convert ball's world position to board's local coordinates
-    const boardCenterY = BOARD_H / 2 - 4;
+    const boardCenterY = board.position.y;
     const localX = ballPos.x;
     const localY = ballPos.y - boardCenterY;
 
@@ -258,9 +258,9 @@ function updatePhysics(delta) {
         ballPhysics.vel.y *= -ballPhysics.bounceDamping;
     }
 
-    // Floor
-    if (ballPhysics.pos.y < r) {
-        ballPhysics.pos.y = r;
+    // Vertical lower bound (bottom of board)
+    if (ballPhysics.pos.y < boardBottom + r) {
+        ballPhysics.pos.y = boardBottom + r;
         ballPhysics.vel.y *= -ballPhysics.bounceDamping;
     }
 
