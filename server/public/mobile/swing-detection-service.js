@@ -94,7 +94,7 @@ class SwingDetectionService {
     // "When i swing up (y) the z is at 1" -> Up is nz, map to z
     return {
       x: nx,
-      y: -nz,
+      y: nz,
       z: ny,
     };
   }
