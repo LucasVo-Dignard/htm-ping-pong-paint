@@ -280,58 +280,9 @@
   <div id="game-container">
       <canvas id="canvas"></canvas>
       <div class="ui-container">
-          <div class="title">3D PING PONG ⚬</div>
+          <div></div> <!-- Empty div to keep flex layout spacing if needed, or just let status panel float right -->
 
           <div>
-              <div class="control-panel">
-                  <h2>⚙️ Launch</h2>
-
-                  <div class="input-group">
-                      <label for="speed">Speed</label>
-                      <input type="number" id="speed" placeholder="50" min="1" max="200" step="1" value="50">
-                  </div>
-
-                  <div class="input-group">
-                      <label for="angleX">Horizontal Angle (°)</label>
-                      <input type="number" id="angleX" placeholder="0" min="-45" max="45" step="1" value="0">
-                  </div>
-
-                  <div class="input-group">
-                      <label for="angleY">Vertical Angle (°)</label>
-                      <input type="number" id="angleY" placeholder="5" min="-45" max="45" step="1" value="5">
-                  </div>
-
-                  <div style="border-top: 1px solid rgba(255,0,255,0.3); margin: 16px 0 16px; padding-top: 16px;">
-                      <div
-                          style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#ff00ff; margin-bottom:12px;">
-                          📐 Board Distance</div>
-                      <div style="display:flex; gap:10px;">
-                          <div class="input-group" style="margin-bottom:0; flex:1;">
-                              <label for="boardNear">Near (Z)</label>
-                              <input type="number" id="boardNear" placeholder="-5" min="-30" max="-1" step="0.5"
-                                  value="-5" oninput="updateBoard()">
-                          </div>
-                          <div class="input-group" style="margin-bottom:0; flex:1;">
-                              <label for="boardFar">Far (Z)</label>
-                              <input type="number" id="boardFar" placeholder="-10" min="-60" max="-2" step="0.5"
-                                  value="-10" oninput="updateBoard()">
-                          </div>
-                      </div>
-                      <div style="font-size:10px; color:#666; margin-top:8px; text-align:center;">
-                          Near = closest bounce point · Far = where board sits
-                      </div>
-                  </div>
-
-                  <div class="button-group">
-                      <button class="game-btn" id="launchBtn" onclick="launchBall()">▶ LAUNCH</button>
-                      <button class="game-btn" id="resetBtn" onclick="resetScene()">⟲ RESET</button>
-                  </div>
-
-                  <div class="queued-indicator" id="queuedIndicator">
-                      No input queued
-                  </div>
-              </div>
-
               <div class="status-panel" style="margin-top: 20px;">
                   <h3>📊 Ball State</h3>
                   <div class="info-item">
@@ -353,12 +304,6 @@
               </div>
           </div>
       </div>
-
-      <div class="bottom-ui">
-          <div class="status-bar" id="statusBar">Ready • Press LAUNCH to begin</div>
-      </div>
-
-
   </div>
 
 </body>
