@@ -79,6 +79,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('hit', (hitData) => {
+    console.log(hitData);
     const code = socket.data.code;
     if (!code || !sessions[code]) {
       console.warn('Hit received from socket with no valid session');
@@ -87,7 +88,6 @@ io.on('connection', (socket) => {
 
     const session = sessions[code];
     if (session.pcSocket) {
-      console.log(hitData);
       session.pcSocket.emit('hit', hitData);
     }
   });

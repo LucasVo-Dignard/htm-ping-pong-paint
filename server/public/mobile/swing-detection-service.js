@@ -1,8 +1,8 @@
-const SWING_ACCELERATION_THRESHOLD = 16;
+const SWING_ACCELERATION_THRESHOLD = 15;
 const SWING_RESET_THRESHOLD = SWING_ACCELERATION_THRESHOLD * 0.65;
 const SWING_COOLDOWN_MS = 250;
 
-class SwingDetectonService {
+class SwingDetectionService {
   constructor(options = {}) {
     this.callback = null;
     this.isRunning = false;
@@ -74,13 +74,28 @@ class SwingDetectonService {
   }
 
   getDirectionVector() {
-    const betaRad = (this.orientation.beta * Math.PI) / 180;
-    const gammaRad = (this.orientation.gamma * Math.PI) / 180;
+    const degToRad = Math.PI / 180;
+    const a = (this.orientation.alpha || 0) * degToRad;
+    const b = (this.orientation.beta || 0) * degToRad;
+    const g = (this.orientation.gamma || 0) * degToRad;
 
+    // W3C standard rotation sequence (Z-X-Y)
+    const cA = Math.cos(a), sA = Math.sin(a);
+    const cB = Math.cos(b), sB = Math.sin(b);
+    const cG = Math.cos(g), sG = Math.sin(g);
+
+    // Calculates the unit vector pointing straight out of the screen (racket face normal)
+    const nx = cA * sG + sA * sB * cG;
+    const ny = sA * sG - cA * sB * cG;
+    const nz = cB * cG;
+
+    // Rotate output to match game coordinates:
+    // "When i swing forward (z) the y is at 1" -> Forward is -ny, map to y
+    // "When i swing up (y) the z is at 1" -> Up is nz, map to z
     return {
-      x: Math.sin(gammaRad),
-      y: -Math.sin(betaRad) * Math.cos(gammaRad),
-      z: Math.cos(betaRad) * Math.cos(gammaRad),
+      x: nx,
+      y: nz,
+      z: ny,
     };
   }
 
@@ -105,8 +120,9 @@ class SwingDetectonService {
   }
 
   onMotion(event) {
-    const acceleration = event.accelerationIncludingGravity ?? event.acceleration ?? {};
-    const zAcceleration = acceleration.z ?? 0;
+    // Z-axis is perpendicular to the screen. 
+    // Use acceleration (factor out gravity) as per advice.
+    const zAcceleration = event.acceleration?.z ?? 0;
     const now = Date.now();
 
     if (Math.abs(zAcceleration) >= SWING_ACCELERATION_THRESHOLD && this.isSwingArmed && now - this.lastSwingAt >= SWING_COOLDOWN_MS) {
@@ -122,6 +138,8 @@ class SwingDetectonService {
   }
 
   onOrientation(event) {
+    if (event.alpha === null) return;
+
     this.orientation = {
       alpha: event.alpha ?? 0,
       beta: event.beta ?? 0,
@@ -130,4 +148,4 @@ class SwingDetectonService {
   }
 }
 
-window.SwingDetectonService = SwingDetectonService;
+window.SwingDetectionService = SwingDetectionService;
