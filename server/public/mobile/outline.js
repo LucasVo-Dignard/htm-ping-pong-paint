@@ -21,7 +21,7 @@ const mobileOutline = {
 
       if (swingService) {
         swingService.setCallback((eventData) => {
-          socket.emit('swing', eventData);
+          socket.emit('hit', eventData);
         });
       }
 
