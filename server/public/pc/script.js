@@ -296,7 +296,6 @@ function updateStatus() {
         } else {
             statusBarEl.textContent = 'Preparing balls...';
         }
-        }
     }
 
     const infoStatusEl = document.getElementById('infoStatus');
