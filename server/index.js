@@ -17,9 +17,25 @@ const PORT = 3000; // Default HTTP port: 80, Default HTTPS port: 443, Server: 30
 
 const sessions = {}; // { code: {pcSocket: , mobileSockets: } }
 
+// Device detection middleware
+function detectDeviceType(req) {
+  const userAgent = req.headers['user-agent'] || '';
+  const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet|phone/i;
+  return mobileRegex.test(userAgent) ? 'mobile' : 'pc';
+}
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
+  const deviceType = detectDeviceType(req);
+  if (deviceType === 'mobile') {
+    res.sendFile(path.join(__dirname, 'public/mobile', 'index.html'));
+  } else {
+    res.sendFile(path.join(__dirname, 'public/pc', 'index.html'));
+  }
+});
+
+app.get('/pc', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/pc', 'index.html'));
 });
 
