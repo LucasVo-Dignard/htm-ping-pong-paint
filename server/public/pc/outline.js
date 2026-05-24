@@ -195,10 +195,12 @@ socket.on('hit', (hitData) => {
 
     // Map direction vector to angles
     const dir = hitData.directionVector;
+    const isBackhand = (hitData.zAcceleration || 0) > 0;
     
     // angleX: Horizontal angle (Rotation around Y axis)
-    // We can use x (East/West) to determine the horizontal angle
-    const newAngleX = Math.floor(dir.x * 45);
+    // Backhand swings produce a smaller X component — boost to compensate
+    const xMultiplier = isBackhand ? 70 : 45;
+    const newAngleX = Math.floor(dir.x * xMultiplier);
 
     // angleY: Vertical angle (Rotation around X axis)
     // We can use z (Up) to determine the vertical angle
