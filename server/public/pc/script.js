@@ -60,12 +60,12 @@ scene.add(floor);
 let BOARD_Z = -10;
 let BOARD_NEAR = 2.5;  // near bounce wall Z
 const BOARD_W = 40;
-const BOARD_H = 28;
+const BOARD_H = 25;
 
 // Create a canvas texture for the board
 const boardTextureCanvas = document.createElement('canvas');
 boardTextureCanvas.width = 1600;  // 4x resolution for better clarity
-boardTextureCanvas.height = 1120; // maintains 40:28 ratio
+boardTextureCanvas.height = 1000; // maintains 40:25 ratio
 const boardCtx = boardTextureCanvas.getContext('2d');
 boardCtx.fillStyle = '#f0f0f0';
 boardCtx.fillRect(0, 0, boardTextureCanvas.width, boardTextureCanvas.height);
@@ -157,9 +157,15 @@ function launchBall() {
         return;
     }
 
-    let speed = (parseFloat(document.getElementById('speed').value) || 10) * ballPhysics.swingAccelerationScale;
-    let angleX = (parseFloat(document.getElementById('angleX').value) || 0) * SWING_ORIENTATION_SCALE * Math.PI / 180;
-    let angleY = (parseFloat(document.getElementById('angleY').value) || 0) * SWING_ORIENTATION_SCALE * Math.PI / 180;
+    // Default to a basic straight hit since UI controls are removed
+    // We will leave these here in case the input logic from mobile is hooked up later
+    let speedElem = document.getElementById('speed');
+    let angleXElem = document.getElementById('angleX');
+    let angleYElem = document.getElementById('angleY');
+
+    let speed = (speedElem ? parseFloat(speedElem.value) : 50) * ballPhysics.swingAccelerationScale;
+    let angleX = (angleXElem ? parseFloat(angleXElem.value) : 0) * SWING_ORIENTATION_SCALE * Math.PI / 180;
+    let angleY = (angleYElem ? parseFloat(angleYElem.value) : 5) * SWING_ORIENTATION_SCALE * Math.PI / 180;
 
     let horizComponent = Math.cos(angleY);
     ballPhysics.vel.x = speed * Math.sin(angleX) * horizComponent;
@@ -169,18 +175,7 @@ function launchBall() {
 
     isFlying = true;
     
-    let indicator = document.getElementById('queuedIndicator');
-    if (indicator) {
-        indicator.classList.remove('active');
-        indicator.textContent = 'Hit registered!';
-        setTimeout(() => { 
-            if (indicator.textContent === 'Hit registered!') {
-                indicator.textContent = 'Ready'; 
-            }
-        }, 1000);
-    }
-    
-    updateStatus();
+    document.getElementById('infoStatus').textContent = 'Flying';
 }
 
 function resetScene() {
@@ -193,24 +188,8 @@ function resetScene() {
     ballPhysics.vel.set(0, 0, 0);
     isFlying = false;
     ballMesh.visible = true;
-    let indicator = document.getElementById('queuedIndicator');
-    if (indicator) {
-        indicator.classList.remove('active');
-        indicator.textContent = 'Ready';
-    }
-    updateStatus();
-}
-
-function updateStatus() {
-    let launchBtn = document.getElementById('launchBtn');
-    if (isFlying) {
-        document.getElementById('statusBar').textContent = 'Ball in flight... Wait for it to return to the hitting zone';
-        launchBtn.textContent = 'WAIT';
-    } else {
-        document.getElementById('statusBar').textContent = 'Ready • Press LAUNCH to begin';
-        launchBtn.textContent = '▶ LAUNCH';
-    }
-    document.getElementById('infoStatus').textContent = isFlying ? 'Flying' : 'Idle';
+    
+    document.getElementById('infoStatus').textContent = 'Idle';
 }
 
 function updateInfo() {
