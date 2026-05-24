@@ -6,6 +6,8 @@ scene.background = new THREE.Color(0xF5F0E8);
 // ── CAMERA: wider FOV + much closer to the action ──────────────────────
 const aspect = window.innerWidth / window.innerHeight;
 const frustumSize = 30;
+
+// Orthographic camera for the game elements (Layer 0)
 let camera = new THREE.OrthographicCamera(
     frustumSize * aspect / -2,
     frustumSize * aspect / 2,
@@ -14,25 +16,35 @@ let camera = new THREE.OrthographicCamera(
     0.1,
     1000
 );
-camera.position.set(0, 14, 5);
-camera.lookAt(0, 10, -14);
+camera.position.set(0, 4, 5);
+camera.lookAt(0, 4, -14);
+
+// Perspective camera for the floor (Layer 1)
+let cameraPersp = new THREE.PerspectiveCamera(70, aspect, 0.1, 1000);
+cameraPersp.position.set(0, 4, 5);
+cameraPersp.lookAt(0, 4, -14);
+cameraPersp.layers.set(1);
 
 const canvas = document.getElementById('canvas');
 let renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.shadowMap.enabled = false;
+renderer.autoClear = false; // Disable autoClear for dual-camera rendering
 
 // Lighting
 let ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+ambientLight.layers.enable(1); // Enable for Layer 1
 scene.add(ambientLight);
 
 let directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(10, 15, 10);
+directionalLight.layers.enable(1); // Enable for Layer 1
 scene.add(directionalLight);
 
 // Grid
 let gridHelper = new THREE.GridHelper(50, 50, 0x8B7355, 0x8B7355);
 gridHelper.position.z = -10;
+gridHelper.layers.set(1); // Set to Layer 1
 scene.add(gridHelper);
 
 // Floor
@@ -41,6 +53,7 @@ let floorMaterial = new THREE.MeshStandardMaterial({ color: 0xA73F2A });
 let floor = new THREE.Mesh(floorGeometry, floorMaterial);
 floor.rotation.x = -Math.PI / 2; // rotate flat
 floor.position.set(0, 0, -10);   // match gridHelper position
+floor.layers.set(1); // Set to Layer 1
 scene.add(floor);
 
 // ── BOARD: bigger and closer so it fills the far end ───────────────────
@@ -327,29 +340,51 @@ function animate() {
     // Update ball mesh position
     ballMesh.position.copy(ballPhysics.pos);
 
-    // Scale ball based on distance from camera to simulate perspective
+    // Slow perspective scaling with no hard minimum
     const dist = camera.position.z - ballPhysics.pos.z; 
     const refDist = camera.position.z - BOARD_NEAR;
-    // minimal scaling
-    const scale = Math.max(0.5, refDist / dist);
+    
+    // Scale factor approaches 0 slowly as distance increases
+    let scale = 1 / (1 + (dist - refDist) * 0.02);
+    if (scale < 0) scale = 0;
+    
     ballMesh.scale.setScalar(scale);
 
     // Offset visual mesh to prevent hovering off the ground when scaled down
     ballMesh.position.y -= ballPhysics.radius * (1 - scale);
 
     updateInfo();
+    
+    // Dual-camera rendering
+    renderer.clear(); // Clear color and depth
+    
+    // 1. Render Layer 1 (Perspective Floor)
+    cameraPersp.layers.set(1);
+    renderer.render(scene, cameraPersp);
+    
+    renderer.clearDepth(); // Clear depth buffer so ortho objects render on top
+    
+    // 2. Render Layer 0 (Orthographic Game Elements)
+    camera.layers.set(0);
     renderer.render(scene, camera);
 }
 
 // Handle window resize
 window.addEventListener('resize', () => {
     const aspect = window.innerWidth / window.innerHeight;
+    
+    // Update Orthographic camera
     const frustumSize = 30;
     camera.left = -frustumSize * aspect / 2;
     camera.right = frustumSize * aspect / 2;
     camera.top = frustumSize / 2;
     camera.bottom = -frustumSize / 2;
     camera.updateProjectionMatrix();
+    
+    // Update Perspective camera
+    cameraPersp.aspect = aspect;
+    cameraPersp.updateProjectionMatrix();
+    
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
