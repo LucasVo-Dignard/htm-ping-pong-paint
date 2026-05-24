@@ -1,6 +1,4 @@
 const socket = io();
-const dot = document.getElementById('dot');
-const statusText = document.getElementById('status-text');
 const codeBlock = document.getElementById('code-block');
 const startBtn = document.getElementById('start-btn');
 let currentCode = '';
@@ -104,13 +102,6 @@ async function copyRoomCode() {
       document.body.removeChild(tempInput);
     }
 
-    if (statusText) {
-      const previousStatus = statusText.textContent;
-      statusText.textContent = 'Code copied';
-      window.setTimeout(() => {
-        statusText.textContent = previousStatus;
-      }, 1200);
-    }
   } catch (error) {
     console.error('Failed to copy room code', error);
   }
@@ -135,24 +126,6 @@ socket.on('mobile_update', (data) => {
     connectedCountNumber.textContent = String(count);
   }
 
-  // update dot class to reflect connection state
-  if (dot) {
-    if (count > 0) {
-      dot.classList.add('connected');
-      dot.classList.remove('disconnected');
-    } else {
-      dot.classList.remove('connected');
-      dot.classList.add('disconnected');
-    }
-  }
-
-  // update status text to be informative
-  if (statusText) {
-    statusText.textContent = count > 0
-      ? `${count} device${count === 1 ? '' : 's'} connected`
-      : 'Connect your mobile device(s) at pingpongpaint.ca/mobile';
-  }
-
   // enable start button when at least one mobile is connected
   if (startBtn) {
     startBtn.disabled = !(count > 0);
@@ -172,8 +145,6 @@ socket.on('code', (code) => {
   codeBlock.innerHTML = code.split('').map(c => `<div class="code-char">${c}</div>`).join('');
  });
 
-// dot.classList.add('connected');
-// statusText.textContent = 'Connected';
 // startBtn.disabled = false;
 
 if (startBtn) {
