@@ -181,12 +181,16 @@ if (startBtn) {
       // Dispatch a resize event to ensure Three.js canvas size is correct 
       // since it was initialized while display was 'none'
       window.dispatchEvent(new Event('resize'));
+      // Mark game as started in the 3D script
+      if (typeof startGame === 'function') startGame();
     }
   });
 }
 
 socket.on('hit', (hitData) => {
   console.log('Received hit from mobile:', hitData);
+  // Ignore hits until the game has started
+  if (!window.gameStarted) return;
   
   if (hitData && hitData.directionVector) {
     // Map acceleration to speed input (adjust multiplier as needed)
