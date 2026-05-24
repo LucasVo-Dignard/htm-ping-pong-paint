@@ -77,6 +77,19 @@ io.on('connection', (socket) => {
       }
     }
   });
+
+  socket.on('hit', (hitData) => {
+    const code = socket.data.code;
+    if (!code || !sessions[code]) {
+      console.warn('Hit received from socket with no valid session');
+      return;
+    }
+
+    const session = sessions[code];
+    if (session.pcSocket) {
+      session.pcSocket.emit('hit', hitData);
+    }
+  });
 });
 
 httpServer.listen(PORT, () => {
