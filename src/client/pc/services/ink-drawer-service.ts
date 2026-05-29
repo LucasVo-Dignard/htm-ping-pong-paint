@@ -1,4 +1,4 @@
-import { Service } from 'typedi';
+import { Service, Container } from 'typedi';
 import { PixelConvolutionService } from './pixel-convolution-service';
 import { HIT_Y_OFFSET, MIN_SPLAT_SIZE, MAX_SPLAT_SIZE, DEFAULT_PALETTE } from '../constants';
 
@@ -42,8 +42,11 @@ export class InkDrawerService {
   private palette: string[] = [];
   private activeColor: string | null = null;
   private autoIndex = 0;
+  private pixelService: PixelConvolutionService;
 
-  constructor(private pixelService: PixelConvolutionService) {}
+  constructor() {
+    this.pixelService = Container.get(PixelConvolutionService);
+  }
 
   setCanvas(canvas: HTMLCanvasElement, options: DrawerServiceOptions = {}): void {
     if (!(canvas instanceof HTMLCanvasElement)) {
