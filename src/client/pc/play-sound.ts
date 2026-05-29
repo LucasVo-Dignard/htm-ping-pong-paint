@@ -6,17 +6,15 @@ import { audioCtx } from './load-sound';
  * @param {number} pitch - Pitch modifier (1.0 = normal, 2.0 = double pitch/speed, 0.5 = half)
  * @returns {Promise<void>}
  */
-export async function playSoundWithPitch(buffer: AudioBuffer | null, pitch = 1.0, volume = 1.0): Promise<void> {
+export function playSoundWithPitch(buffer: AudioBuffer | null, pitch = 1.0, volume = 1.0): Promise<void> {
   if (!buffer) {
-    return;
+    return Promise.resolve();
   }
 
   if (audioCtx.state === 'suspended') {
-    try {
-      await audioCtx.resume();
-    } catch (e) {
+    audioCtx.resume().catch((e) => {
       console.warn('Failed to resume AudioContext inside playSoundWithPitch:', e);
-    }
+    });
   }
 
   const source = audioCtx.createBufferSource();
@@ -33,6 +31,7 @@ export async function playSoundWithPitch(buffer: AudioBuffer | null, pitch = 1.0
   }
 
   source.start(0);
+  return Promise.resolve();
 }
 
 (window as any).playSoundWithPitch = playSoundWithPitch;

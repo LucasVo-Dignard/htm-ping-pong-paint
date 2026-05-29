@@ -47,6 +47,7 @@ import {
   BALL_EMISSIVE_COLOR,
   BALL_EMISSIVE_INTENSITY,
   BALL_GEOMETRY_SEGMENTS,
+  BALL_LINEAR_SCALE_FACTOR,
   IDLE_THRESHOLD,
   IDLE_RESET_DELAY,
   SWING_ORIENTATION_SCALE,
@@ -534,8 +535,7 @@ function animate() {
 
         const dist = camera.position.z - ball.physics.pos.z;
         const refDist = camera.position.z - BOARD_NEAR;
-        const linearScaleFactor = 0.06;
-        let scale = 1.0 - ((dist - refDist) * linearScaleFactor);
+        let scale = 1.0 - ((dist - refDist) * BALL_LINEAR_SCALE_FACTOR);
         if (scale < 0) scale = 0;
         ball.mesh.scale.setScalar(scale);
         ball.mesh.position.y -= ball.physics.radius * (1 - scale);

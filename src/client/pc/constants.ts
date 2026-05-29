@@ -47,12 +47,13 @@ export const BALL_RADIUS = 1.0;
 export const BALL_GRAVITY = 0.003;
 export const BALL_DAMPING = 0.999;
 export const BALL_BOUNCE_DAMPING = 0.85;
-export const BALL_SWING_ACCELERATION_SCALE = 0.01;
+export const BALL_SWING_ACCELERATION_SCALE = 0.02;
 export const BALL_MAX_SPEED = 0.5;
 export const BALL_COLOR = 0x000000;
 export const BALL_EMISSIVE_COLOR = 0xff4500;
 export const BALL_EMISSIVE_INTENSITY = 0.05;
 export const BALL_GEOMETRY_SEGMENTS = 32;
+export const BALL_LINEAR_SCALE_FACTOR = 0.04;
 
 // Swing logic
 export const IDLE_THRESHOLD = 0.02;
