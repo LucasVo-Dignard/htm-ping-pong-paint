@@ -131,6 +131,12 @@ io.on(SocketEvents.CONNECTION, (socket: Socket) => {
     }
     sessionService.emitBallHit(code);
   });
+
+  socket.on(SocketEvents.HITTABLE_STATUS, (status: boolean) => {
+    const code = socket.data.code;
+    if (!code) return;
+    sessionService.emitHittableStatus(code, status);
+  });
 });
 
 httpServer.listen(PORT, () => {

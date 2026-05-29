@@ -1,7 +1,7 @@
 import { loadSound, audioCtx } from './load-sound';
 import { playSoundWithPitch } from './play-sound';
 import { playMetalSound } from './metallic-sound';
-import { setBallCount, startGame, updateSwing, launchBall } from './script';
+import { setBallCount, startGame, updateSwing, launchBall, getHittableBalls } from './script';
 import { SocketEvents, Material } from '../../shared/constants';
 
 declare const io: any;
@@ -257,3 +257,17 @@ socket.on(SocketEvents.MATERIAL_SELECT, async (data: { material?: string }) => {
     }
   }
 });
+
+// Track the "hittable ball" status and emit state changes to the server
+let lastHittableState = false;
+function checkHittableState() {
+  requestAnimationFrame(checkHittableState);
+  if (!(window as any).gameStarted) return;
+
+  const isHittable = getHittableBalls().length > 0;
+  if (isHittable !== lastHittableState) {
+    lastHittableState = isHittable;
+    socket.emit(SocketEvents.HITTABLE_STATUS, isHittable);
+  }
+}
+requestAnimationFrame(checkHittableState);

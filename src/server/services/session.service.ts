@@ -83,4 +83,13 @@ export class SessionService {
       console.warn(`Server: emitBallHit failed — no session found for room: ${code}`);
     }
   }
+
+  emitHittableStatus(code: string, status: boolean): void {
+    const session = this.sessions[code];
+    if (session) {
+      session.mobileSockets.forEach(mobileSocket => {
+        mobileSocket.emit(SocketEvents.HITTABLE_STATUS, status);
+      });
+    }
+  }
 }
