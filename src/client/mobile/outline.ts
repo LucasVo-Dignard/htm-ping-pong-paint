@@ -245,12 +245,83 @@ export const mobileOutline = {
 
       socket.on(SocketEvents.BALL_HIT, () => {
         console.log('Mobile: received BALL_HIT socket event. AudioContext state:', audioCtx ? audioCtx.state : 'undefined');
+        const lastSocketEl = document.getElementById('debug-last-socket');
+        if (lastSocketEl) {
+          lastSocketEl.textContent = `BALL_HIT at ${new Date().toLocaleTimeString()}`;
+        }
         if (woodBuffer) {
-          playSoundWithPitch(woodBuffer, 1.0, 0.5);
+          playSoundWithPitch(woodBuffer, 1.0, 1.0);
         } else {
           console.warn('Mobile: received BALL_HIT but woodBuffer is not loaded!');
         }
       });
+
+      // --- Debug Overlay for Diagnostics ---
+      const debugPanel = document.createElement('div');
+      debugPanel.id = 'mobile-audio-debug-panel';
+      debugPanel.style.position = 'fixed';
+      debugPanel.style.bottom = '12px';
+      debugPanel.style.left = '12px';
+      debugPanel.style.right = '12px';
+      debugPanel.style.padding = '12px';
+      debugPanel.style.background = 'rgba(15, 23, 42, 0.95)';
+      debugPanel.style.color = '#e2e8f0';
+      debugPanel.style.fontSize = '12px';
+      debugPanel.style.fontFamily = 'monospace';
+      debugPanel.style.borderRadius = '10px';
+      debugPanel.style.zIndex = '9999';
+      debugPanel.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.5), 0 4px 6px -4px rgba(0,0,0,0.5)';
+      debugPanel.style.border = '1px solid #334155';
+
+      const statusText = document.createElement('div');
+      statusText.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 6px; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 4px;">AUDIO DIAGNOSTICS</div>
+        Ctx State: <span id="debug-ctx-state" style="color: #fbbf24">${audioCtx ? audioCtx.state : 'null'}</span><br/>
+        Wood Loaded: <span id="debug-wood-loaded" style="color: #34d399">false</span><br/>
+        Last Event: <span id="debug-last-socket" style="color: #60a5fa">none</span>
+      `;
+      debugPanel.appendChild(statusText);
+
+      const testBtn = document.createElement('button');
+      testBtn.textContent = '🔊 TEST SOUND';
+      testBtn.style.marginTop = '10px';
+      testBtn.style.padding = '8px 12px';
+      testBtn.style.background = '#0284c7';
+      testBtn.style.color = '#ffffff';
+      testBtn.style.border = 'none';
+      testBtn.style.borderRadius = '6px';
+      testBtn.style.fontWeight = 'bold';
+      testBtn.style.width = '100%';
+      testBtn.style.cursor = 'pointer';
+      testBtn.style.transition = 'background-color 0.2s';
+      testBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Mobile: Test button clicked. Context state:', audioCtx ? audioCtx.state : 'null');
+        unlockAudio();
+        if (woodBuffer) {
+          playSoundWithPitch(woodBuffer, 1.0, 1.0);
+          console.log('Mobile: Test sound played successfully');
+        } else {
+          console.warn('Mobile: Test clicked but woodBuffer is null!');
+        }
+      });
+      debugPanel.appendChild(testBtn);
+      document.body.appendChild(debugPanel);
+
+      // Periodically update diagnostic information
+      setInterval(() => {
+        const el = document.getElementById('debug-ctx-state');
+        if (el && audioCtx) {
+          el.textContent = audioCtx.state;
+          el.style.color = audioCtx.state === 'running' ? '#34d399' : '#f87171';
+        }
+        const el2 = document.getElementById('debug-wood-loaded');
+        if (el2) {
+          el2.textContent = String(woodBuffer !== null);
+          el2.style.color = woodBuffer !== null ? '#34d399' : '#f87171';
+        }
+      }, 500);
+
     } catch (e) {
       // socket.io not available or other error
       console.error('Socket join not initialized:', e);
