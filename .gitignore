@@ -1,3 +1,8 @@
 .DS_Store
 node_modules
 package-lock.json
+/dist
+/server/public/pc/index.js
+/server/public/pc/index.js.map
+/server/public/mobile/index.js
+/server/public/mobile/index.js.map

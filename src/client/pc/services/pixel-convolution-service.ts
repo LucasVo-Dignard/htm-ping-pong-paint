@@ -1,6 +1,15 @@
-const RADIUS = 5;
+import { Service } from 'typedi';
+import { PIXEL_CONVOLUTION_RADIUS as RADIUS } from '../constants';
 
-class PixelConvolutionService {
+@Service()
+export class PixelConvolutionService {
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D | null;
+  private cache: Record<string, Uint8ClampedArray | 'loading'>;
+  public currentUrl: string | null;
+  public imgWidth: number;
+  public imgHeight: number;
+
   constructor() {
     this.canvas = document.createElement('canvas');
     this.ctx = this.canvas.getContext('2d');
@@ -10,7 +19,7 @@ class PixelConvolutionService {
     this.imgHeight = 0;
   }
 
-  prepareImage(imagePath) {
+  prepareImage(imagePath: string): void {
     if (this.cache[imagePath]) return;
     this.cache[imagePath] = 'loading'; // Prevent duplicate loads
     
@@ -19,8 +28,10 @@ class PixelConvolutionService {
     img.onload = () => {
       this.canvas.width = img.width;
       this.canvas.height = img.height;
-      this.ctx.drawImage(img, 0, 0);
-      this.cache[imagePath] = this.ctx.getImageData(0, 0, img.width, img.height).data;
+      if (this.ctx) {
+        this.ctx.drawImage(img, 0, 0);
+        this.cache[imagePath] = this.ctx.getImageData(0, 0, img.width, img.height).data;
+      }
       this.currentUrl = imagePath;
       this.imgWidth = img.width;
       this.imgHeight = img.height;
@@ -35,7 +46,7 @@ class PixelConvolutionService {
    * @param {number} y - Y coordinate of the center pixel
    * @returns {Promise<{r: number, g: number, b: number}>} Average RGB values
    */
-  async getAveragePixelColor(imagePath, x, y) {
+  async getAveragePixelColor(imagePath: string, x: number, y: number): Promise<{ r: number; g: number; b: number }> {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -43,38 +54,42 @@ class PixelConvolutionService {
       img.onload = () => {
         this.canvas.width = img.width;
         this.canvas.height = img.height;
-        this.ctx.drawImage(img, 0, 0);
+        if (this.ctx) {
+          this.ctx.drawImage(img, 0, 0);
 
-        const imageData = this.ctx.getImageData(
-          0,
-          0,
-          this.canvas.width,
-          this.canvas.height
-        );
-        const data = imageData.data;
+          const imageData = this.ctx.getImageData(
+            0,
+            0,
+            this.canvas.width,
+            this.canvas.height
+          );
+          const data = imageData.data;
 
-        let r = 0, g = 0, b = 0, count = 0;
+          let r = 0, g = 0, b = 0, count = 0;
 
-        for (let dy = -RADIUS; dy <= RADIUS; dy++) {
-          for (let dx = -RADIUS; dx <= RADIUS; dx++) {
-            const px = x + dx;
-            const py = y + dy;
+          for (let dy = -RADIUS; dy <= RADIUS; dy++) {
+            for (let dx = -RADIUS; dx <= RADIUS; dx++) {
+              const px = x + dx;
+              const py = y + dy;
 
-            if (px >= 0 && px < this.canvas.width && py >= 0 && py < this.canvas.height) {
-              const index = (py * this.canvas.width + px) * 4;
-              r += data[index];
-              g += data[index + 1];
-              b += data[index + 2];
-              count++;
+              if (px >= 0 && px < this.canvas.width && py >= 0 && py < this.canvas.height) {
+                const index = (py * this.canvas.width + px) * 4;
+                r += data[index];
+                g += data[index + 1];
+                b += data[index + 2];
+                count++;
+              }
             }
           }
-        }
 
-        resolve({
-          r: Math.round(r / count),
-          g: Math.round(g / count),
-          b: Math.round(b / count),
-        });
+          resolve({
+            r: Math.round(r / count),
+            g: Math.round(g / count),
+            b: Math.round(b / count),
+          });
+        } else {
+          reject(new Error('Failed to get 2d context'));
+        }
       };
 
       img.onerror = () => reject(new Error(`Failed to load image: ${imagePath}`));
@@ -82,7 +97,7 @@ class PixelConvolutionService {
     });
   }
 
-  getAveragePixelColorSync(imagePath, x, y) {
+  getAveragePixelColorSync(imagePath: string, x: number, y: number): { r: number; g: number; b: number } | null {
     const data = this.cache[imagePath];
     if (!data || data === 'loading') return null;
 

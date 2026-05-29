@@ -1,10 +1,33 @@
-const socket = io();
-const codeBlock = document.getElementById('code-block');
-const startBtn = document.getElementById('start-btn');
-let currentCode = '';
-window.selectedCanvasUrl = null; // null represents the blank canvas
+import { loadSound, audioCtx } from './load-sound';
+import { playSoundWithPitch } from './play-sound';
+import { playMetalSound } from './metallic-sound';
+import { setBallCount, startGame, updateSwing, launchBall } from './script';
+import { SocketEvents, Material } from '../../shared/constants';
 
-async function loadCanvasOptions() {
+declare const io: any;
+const socket = io();
+
+const codeBlock = document.getElementById('code-block');
+const startBtn = document.getElementById('start-btn') as HTMLButtonElement | null;
+let currentCode = '';
+
+(window as any).selectedCanvasUrl = null; // null represents the blank canvas
+
+interface ImageInfo {
+  file?: string;
+  filename?: string;
+  src?: string;
+  title?: string;
+  name?: string;
+  paintingName?: string;
+  paintingArtist?: string;
+  artist?: string;
+  author?: string;
+  date?: string;
+  year?: string;
+}
+
+async function loadCanvasOptions(): Promise<void> {
   const imageGrid = document.getElementById('image-grid');
   if (!imageGrid) return;
 
@@ -15,7 +38,7 @@ async function loadCanvasOptions() {
   blankDiv.addEventListener('click', () => {
     document.querySelectorAll('.canvas-option').forEach(el => el.classList.remove('selected'));
     blankDiv.classList.add('selected');
-    window.selectedCanvasUrl = null;
+    (window as any).selectedCanvasUrl = null;
   });
   imageGrid.appendChild(blankDiv);
 
@@ -24,14 +47,14 @@ async function loadCanvasOptions() {
     const response = await fetch('/images/info.json');
     const data = await response.json();
     
-    let images = [];
+    let images: ImageInfo[] = [];
     if (Array.isArray(data)) {
       images = data;
     } else {
       // Search for any top-level key that contains an array (like "paintings")
       const foundArray = Object.values(data).find(val => Array.isArray(val));
       if (foundArray) {
-        images = foundArray;
+        images = foundArray as ImageInfo[];
       } else {
         // Fallback for { "01.webp": { "title": "..." } } dictionary style
         images = Object.entries(data).map(([key, val]) => ({
@@ -71,7 +94,7 @@ async function loadCanvasOptions() {
       imgDiv.addEventListener('click', () => {
         document.querySelectorAll('.canvas-option').forEach(el => el.classList.remove('selected'));
         imgDiv.classList.add('selected');
-        window.selectedCanvasUrl = imgUrl;
+        (window as any).selectedCanvasUrl = imgUrl;
       });
       
       imageGrid.appendChild(imgDiv);
@@ -84,7 +107,7 @@ async function loadCanvasOptions() {
 // Initialize options
 loadCanvasOptions();
 
-async function copyRoomCode() {
+async function copyRoomCode(): Promise<void> {
   if (!currentCode || !codeBlock) return;
 
   try {
@@ -101,7 +124,6 @@ async function copyRoomCode() {
       document.execCommand('copy');
       document.body.removeChild(tempInput);
     }
-
   } catch (error) {
     console.error('Failed to copy room code', error);
   }
@@ -111,14 +133,14 @@ if (codeBlock) {
   codeBlock.addEventListener('click', copyRoomCode);
 }
 
-socket.on('connect', () => {
-  socket.emit('register', 'pc');
+socket.on(SocketEvents.CONNECT, () => {
+  socket.emit(SocketEvents.REGISTER, 'pc');
 });
 
 // get the connected count element
 const connectedCountNumber = document.getElementById('connected-count-number');
 
-socket.on('mobile_update', (data) => {
+socket.on(SocketEvents.MOBILE_UPDATE, (data: { count?: number }) => {
   // Update the UI to show the number of connected mobile clients
   const count = data && typeof data.count === 'number' ? data.count : 0;
 
@@ -131,24 +153,17 @@ socket.on('mobile_update', (data) => {
     startBtn.disabled = !(count > 0);
   }
 
-  if (typeof setBallCount === 'function') {
-    setBallCount(count);
-  } else {
-    // Script not loaded yet — store pending count for script to apply later
-    window.__pendingBallCount = count;
-  }
+  setBallCount(count);
 });
 
-socket.on('code', (code) => {
+socket.on(SocketEvents.CODE, (code: string) => {
   if (!codeBlock) return;
   currentCode = code;
   codeBlock.innerHTML = code.split('').map(c => `<div class="code-char">${c}</div>`).join('');
- });
-
-// startBtn.disabled = false;
+});
 
 if (startBtn) {
-  startBtn.addEventListener('click', () => {
+  startBtn.addEventListener('click', async () => {
     const lobbyContainer = document.getElementById('lobby-container');
     const gameContainer = document.getElementById('game-container');
     
@@ -159,15 +174,35 @@ if (startBtn) {
       // Dispatch a resize event to ensure Three.js canvas size is correct 
       // since it was initialized while display was 'none'
       window.dispatchEvent(new Event('resize'));
+
+      // Resume AudioContext on user gesture
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
+
+      // Load sounds when the game starts so there is no delay
+      try {
+        woodBuffer = await loadSound('/sounds/wood.wav');
+        plasticBuffer = await loadSound('/sounds/plastic.wav');
+        (window as any).woodBuffer = woodBuffer;
+        (window as any).plasticBuffer = plasticBuffer;
+        console.log('Sound buffers loaded on game start');
+      } catch (error) {
+        console.warn('Failed to load sound buffers:', error);
+      }
+
       // Mark game as started in the 3D script
-      if (typeof startGame === 'function') startGame();
+      startGame();
+
+      // Notify the server (and mobile clients) that the game has started
+      socket.emit(SocketEvents.GAME_START);
     }
   });
 }
 
-socket.on('hit', (hitData) => {
+socket.on(SocketEvents.HIT, (hitData: any) => {
   // Ignore hits until the game has started
-  if (!window.gameStarted) return;
+  if (!(window as any).gameStarted) return;
   
   if (hitData && hitData.directionVector) {
     // Map acceleration to speed input (adjust multiplier as needed)
@@ -187,61 +222,34 @@ socket.on('hit', (hitData) => {
     // We can use z (Up) to determine the vertical angle
     const newAngleY = Math.floor(dir.z * 45);
 
-    if (typeof updateSwing === 'function') {
-      updateSwing(newSpeed, newAngleX, newAngleY);
-    } else {
-      // Fallback if script.js isn't loaded or updated
-      const speedInput = document.getElementById('speed');
-      if (speedInput) speedInput.value = newSpeed;
-      const angleXInput = document.getElementById('angleX');
-      if (angleXInput) angleXInput.value = newAngleX;
-      const angleYInput = document.getElementById('angleY');
-      if (angleYInput) angleYInput.value = newAngleY;
-    }
+    updateSwing(newSpeed, newAngleX, newAngleY);
 
     // Trigger the launch
-    if (typeof launchBall === 'function') {
-      launchBall();
-    }
+    launchBall();
   }
 });
 
-let woodBuffer = null;
-let plasticBuffer = null;
+export let woodBuffer: AudioBuffer | null = null;
+export let plasticBuffer: AudioBuffer | null = null;
 
-// Pre-load sound buffers
-(async () => {
-  try {
-    if (typeof loadSound === 'function') {
-      woodBuffer = await loadSound('/sounds/wood.wav');
-      plasticBuffer = await loadSound('/sounds/plastic.wav');
-      window.woodBuffer = woodBuffer;
-      window.plasticBuffer = plasticBuffer;
-      console.log('Sound buffers loaded');
-    }
-  } catch (error) {
-    console.warn('Failed to preload sound buffers:', error);
-  }
-})();
 
-socket.on('material_select', async (data) => {
+
+socket.on(SocketEvents.MATERIAL_SELECT, async (data: { material?: string }) => {
   if (!data || !data.material) {
     return;
   }
 
   const material = data.material.toLowerCase();
-  window.selectedMaterial = material;
+  (window as any).selectedMaterial = material;
 
-  if (material === 'metal') {
-    if (typeof playMetalSound === 'function') {
-      playMetalSound(500);
-    }
-  } else if (material === 'wood') {
-    if (woodBuffer && typeof playSoundWithPitch === 'function') {
+  if (material === Material.METAL) {
+    playMetalSound(500);
+  } else if (material === Material.WOOD) {
+    if (woodBuffer) {
       await playSoundWithPitch(woodBuffer, 1.0);
     }
-  } else if (material === 'plastic') {
-    if (plasticBuffer && typeof playSoundWithPitch === 'function') {
+  } else if (material === Material.PLASTIC) {
+    if (plasticBuffer) {
       await playSoundWithPitch(plasticBuffer, 1.0);
     }
   }

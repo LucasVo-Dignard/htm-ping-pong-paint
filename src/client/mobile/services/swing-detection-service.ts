@@ -1,14 +1,34 @@
-const SWING_ACCELERATION_THRESHOLD = 15;
-const SWING_RESET_THRESHOLD = SWING_ACCELERATION_THRESHOLD * 0.65;
-const SWING_COOLDOWN_MS = 250;
+import { Service } from 'typedi';
+import { SWING_ACCELERATION_THRESHOLD, SWING_RESET_THRESHOLD, SWING_COOLDOWN_MS } from '../constants';
 
-class SwingDetectionService {
-  constructor(options = {}) {
+interface SwingData {
+  zAcceleration: number;
+  directionVector: {
+    x: number;
+    y: number;
+    z: number;
+  };
+}
+
+@Service()
+export class SwingDetectionService {
+  private callback: ((data: SwingData) => void) | null;
+  public isRunning: boolean;
+  private isSwingArmed: boolean;
+  private lastSwingAt: number;
+  private alphaOffset: number | null; // calibration: first alpha reading becomes "zero"
+  private orientation: {
+    alpha: number;
+    beta: number;
+    gamma: number;
+  };
+
+  constructor() {
     this.callback = null;
     this.isRunning = false;
     this.isSwingArmed = true;
     this.lastSwingAt = 0;
-    this.alphaOffset = null; // calibration: first alpha reading becomes "zero"
+    this.alphaOffset = null;
     this.orientation = {
       alpha: 0,
       beta: 0,
@@ -19,27 +39,27 @@ class SwingDetectionService {
     this.onOrientation = this.onOrientation.bind(this);
   }
 
-  setCallback(callback) {
+  setCallback(callback: (data: SwingData) => void): void {
     this.callback = callback;
   }
 
-  async requestPermission() {
+  async requestPermission(): Promise<void> {
     const motionPermissionNeeded =
       typeof DeviceMotionEvent !== 'undefined' &&
-      typeof DeviceMotionEvent.requestPermission === 'function';
+      typeof (DeviceMotionEvent as any).requestPermission === 'function';
     const orientationPermissionNeeded =
       typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function';
+      typeof (DeviceOrientationEvent as any).requestPermission === 'function';
 
     if (!motionPermissionNeeded && !orientationPermissionNeeded) {
       return;
     }
 
     const motionPermission = motionPermissionNeeded
-      ? await DeviceMotionEvent.requestPermission()
+      ? await (DeviceMotionEvent as any).requestPermission()
       : 'granted';
     const orientationPermission = orientationPermissionNeeded
-      ? await DeviceOrientationEvent.requestPermission()
+      ? await (DeviceOrientationEvent as any).requestPermission()
       : 'granted';
 
     if (motionPermission !== 'granted' || orientationPermission !== 'granted') {
@@ -47,7 +67,7 @@ class SwingDetectionService {
     }
   }
 
-  async start() {
+  async start(): Promise<void> {
     if (this.isRunning) {
       return;
     }
@@ -60,7 +80,7 @@ class SwingDetectionService {
     this.isRunning = true;
   }
 
-  stop() {
+  stop(): void {
     if (!this.isRunning) {
       return;
     }
@@ -71,7 +91,7 @@ class SwingDetectionService {
     this.isSwingArmed = true;
   }
 
-  getDirectionVector() {
+  getDirectionVector(): { x: number; y: number; z: number } {
     const degToRad = Math.PI / 180;
     // Subtract the calibration offset so the initial facing direction = 0
     const rawAlpha = this.orientation.alpha || 0;
@@ -97,7 +117,7 @@ class SwingDetectionService {
     };
   }
 
-  logSwing(zAcceleration) {
+  logSwing(zAcceleration: number): void {
     const directionVector = this.getDirectionVector();
 
     if (zAcceleration > 0) {
@@ -114,7 +134,7 @@ class SwingDetectionService {
     }
   }
 
-  onMotion(event) {
+  onMotion(event: DeviceMotionEvent): void {
     // Z-axis is perpendicular to the screen. 
     // Use acceleration (factor out gravity) as per advice.
     const zAcceleration = event.acceleration?.z ?? 0;
@@ -132,7 +152,7 @@ class SwingDetectionService {
     }
   }
 
-  onOrientation(event) {
+  onOrientation(event: DeviceOrientationEvent): void {
     if (event.alpha === null) return;
 
     // Capture the first alpha reading as the "zero" reference
@@ -148,4 +168,4 @@ class SwingDetectionService {
   }
 }
 
-window.SwingDetectionService = SwingDetectionService;
+(window as any).SwingDetectionService = SwingDetectionService;
