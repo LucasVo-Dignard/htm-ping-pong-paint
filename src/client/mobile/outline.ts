@@ -8,6 +8,7 @@ declare const io: any;
 
 export const mobileOutline = {
   init(): void {
+    alert('Mobile Lobby Initialized');
     const root = document.getElementById('app');
     if (!root) return;
 
