@@ -8,6 +8,15 @@ declare const io: any;
 
 export const mobileOutline = {
   init(): void {
+    alert('Mobile Lobby Initialized');
+    // Set audio session type for iOS to bypass physical mute switch as early as possible
+    if (typeof navigator !== 'undefined' && 'audioSession' in navigator) {
+      try {
+        (navigator as any).audioSession.type = 'playback';
+      } catch (e) {
+        console.warn('Failed to set audioSession type in init:', e);
+      }
+    }
     const root = document.getElementById('app');
     if (!root) return;
 
@@ -25,6 +34,38 @@ export const mobileOutline = {
       let woodBuffer: AudioBuffer | null = null;
       let plasticBuffer: AudioBuffer | null = null;
 
+      // Set audio session type for iOS to bypass physical mute switch
+      const configureAudioSession = () => {
+        if (typeof navigator !== 'undefined' && 'audioSession' in navigator) {
+          try {
+            (navigator as any).audioSession.type = 'playback';
+            console.log('audioSession type set to playback');
+          } catch (e) {
+            console.warn('Failed to set audioSession type:', e);
+          }
+        }
+      };
+
+      // Fully unlock Web Audio API synchronously inside user gesture
+      const unlockAudio = () => {
+        configureAudioSession();
+        if (audioCtx) {
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume().catch((err) => console.warn('Failed to resume AudioContext:', err));
+          }
+          // Play a silent dummy buffer source to trigger audio unlock on iOS/Android
+          try {
+            const buffer = audioCtx.createBuffer(1, 1, 22050);
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioCtx.destination);
+            source.start(0);
+          } catch (e) {
+            console.warn('Failed to play silent dummy buffer:', e);
+          }
+        }
+      };
+
       // Robustly resume AudioContext and request sensor permission on first user interaction gesture (click or tap)
       const resumeAudio = () => {
         if (swingService && !swingService.isRunning) {
@@ -33,19 +74,12 @@ export const mobileOutline = {
             alert('Failed to start swing service: ' + (err instanceof Error ? err.message : err));
           });
         }
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume().then(() => {
-            console.log('AudioContext resumed successfully');
-            window.removeEventListener('click', resumeAudio);
-            window.removeEventListener('touchstart', resumeAudio);
-          }).catch((err) => console.warn('Failed to resume AudioContext:', err));
-        } else {
-          window.removeEventListener('click', resumeAudio);
-          window.removeEventListener('touchstart', resumeAudio);
-        }
+        unlockAudio();
+        window.removeEventListener('click', resumeAudio);
+        window.removeEventListener('touchstart', resumeAudio);
       };
-      window.addEventListener('click', resumeAudio, { passive: true });
-      window.addEventListener('touchstart', resumeAudio, { passive: true });
+      window.addEventListener('click', resumeAudio);
+      window.addEventListener('touchstart', resumeAudio);
 
       // Pre-load wood and plastic sounds immediately on page load
       (async () => {
@@ -62,7 +96,7 @@ export const mobileOutline = {
       swingService.setCallback((eventData) => {
         socket.emit(SocketEvents.HIT, eventData);
         if (woodBuffer) {
-          playSoundWithPitch(woodBuffer, 1.0, 0.25); // Play faint wood sound (0.25 volume is audible on phone speakers)
+          playSoundWithPitch(woodBuffer, 1.0, 0.5); // Play faint wood sound (0.5 volume is audible on phone speakers)
         }
       });
 
@@ -123,10 +157,8 @@ export const mobileOutline = {
           });
         }
 
-        // Resume AudioContext synchronously
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume().catch(() => {});
-        }
+        // Unlock and resume AudioContext synchronously
+        unlockAudio();
 
         setStatus('Joining...');
         socket.emit(SocketEvents.JOIN, codeClean);
@@ -159,10 +191,8 @@ export const mobileOutline = {
           // Wire material buttons to emit socket message and play local audio feedback
           materialBtns.forEach((btn) => {
             btn.addEventListener('click', () => {
-              // Ensure audioCtx is resumed on click gesture
-              if (audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume().catch(() => {});
-              }
+              // Ensure audioCtx is resumed and unlocked on click gesture
+              unlockAudio();
               // Ensure swingService is started on click gesture
               if (swingService && !swingService.isRunning) {
                 swingService.start().catch((err) => {
@@ -173,13 +203,13 @@ export const mobileOutline = {
               const material = btn.getAttribute('data-material');
               socket.emit(SocketEvents.MATERIAL_SELECT, { material });
 
-              // Play faint local audio feedback
+              // Play local audio feedback (volume increased to 0.5)
               if (material === 'wood' && woodBuffer) {
-                playSoundWithPitch(woodBuffer, 1.0, 0.25);
+                playSoundWithPitch(woodBuffer, 1.0, 0.5);
               } else if (material === 'plastic' && plasticBuffer) {
-                playSoundWithPitch(plasticBuffer, 1.0, 0.25);
+                playSoundWithPitch(plasticBuffer, 1.0, 0.5);
               } else if (material === 'metal') {
-                playMetalSound(500, 0.25);
+                playMetalSound(500, 0.5);
               }
             });
           });
