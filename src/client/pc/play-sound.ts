@@ -12,7 +12,11 @@ export async function playSoundWithPitch(buffer: AudioBuffer | null, pitch = 1.0
   }
 
   if (audioCtx.state === 'suspended') {
-    await audioCtx.resume();
+    try {
+      await audioCtx.resume();
+    } catch (e) {
+      console.warn('Failed to resume AudioContext inside playSoundWithPitch:', e);
+    }
   }
 
   const source = audioCtx.createBufferSource();

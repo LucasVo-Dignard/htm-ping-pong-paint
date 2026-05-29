@@ -109,24 +109,26 @@ export const mobileOutline = {
         });
       }
 
-      async function joinWithCode(c?: string): Promise<void> {
+      function joinWithCode(c?: string): void {
         const codeClean = normalizeInputValue(c || (input ? input.value : ''));
         if (!validateRoomCode(codeClean)) {
           setStatus(codeClean.length === 0 ? 'Room code is required.' : 'Enter exactly 4 letters.', false);
           return;
         }
 
-        // Resume AudioContext on user gesture
-        if (audioCtx && audioCtx.state === 'suspended') {
-          await audioCtx.resume().catch(() => {});
-        }
-
+        // Start swing detection synchronously inside user gesture turn (before any async yields!)
         if (swingService && !swingService.isRunning) {
           swingService.start().catch((error) => {
             console.warn('Could not start swing detection service:', error);
             alert('Could not start swing detection service: ' + (error instanceof Error ? error.message : error));
           });
         }
+
+        // Resume AudioContext synchronously
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(() => {});
+        }
+
         setStatus('Joining...');
         socket.emit(SocketEvents.JOIN, codeClean);
       }
@@ -157,10 +159,10 @@ export const mobileOutline = {
 
           // Wire material buttons to emit socket message and play local audio feedback
           materialBtns.forEach((btn) => {
-            btn.addEventListener('click', async () => {
+            btn.addEventListener('click', () => {
               // Ensure audioCtx is resumed on click gesture
               if (audioCtx && audioCtx.state === 'suspended') {
-                await audioCtx.resume().catch(() => {});
+                audioCtx.resume().catch(() => {});
               }
               // Ensure swingService is started on click gesture
               if (swingService && !swingService.isRunning) {
@@ -216,6 +218,10 @@ export const mobileOutline = {
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    mobileOutline.init();
+  });
+} else {
   mobileOutline.init();
-});
+}
