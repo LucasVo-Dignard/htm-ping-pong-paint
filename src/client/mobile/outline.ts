@@ -1,6 +1,8 @@
 import { Container } from 'typedi';
 import { SwingDetectionService } from './services/swing-detection-service';
 import { ROOM_CODE_LENGTH, ROOM_CODE_REGEX, SocketEvents } from '../../shared/constants';
+import { loadSound, audioCtx } from '../pc/load-sound';
+import { playSoundWithPitch } from '../pc/play-sound';
 
 declare const io: any;
 
@@ -20,9 +22,20 @@ export const mobileOutline = {
       socket.emit(SocketEvents.REGISTER, 'mobile');
 
       const swingService = Container.get(SwingDetectionService);
+      let woodBuffer: AudioBuffer | null = null;
+
+      // Resume context on any click/touch on page as a general gesture fallback
+      document.body.addEventListener('click', () => {
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(() => {});
+        }
+      }, { once: true });
 
       swingService.setCallback((eventData) => {
         socket.emit(SocketEvents.HIT, eventData);
+        if (woodBuffer) {
+          playSoundWithPitch(woodBuffer, 1.0, 0.05); // Play faint wood sound
+        }
       });
 
       // helper: display a small status element in the card
@@ -49,6 +62,7 @@ export const mobileOutline = {
       const h1 = card.querySelector('h1') as HTMLElement | null;
       const lead = card.querySelector('.lead') as HTMLElement | null;
       const joinGroup = document.getElementById('join-group');
+      const statusPill = document.querySelector('.status-pill') as HTMLElement | null;
 
       function validateRoomCode(value: string): boolean {
         return ROOM_CODE_REGEX.test(value);
@@ -72,6 +86,21 @@ export const mobileOutline = {
           setStatus(codeClean.length === 0 ? 'Room code is required.' : 'Enter exactly 4 letters.', false);
           return;
         }
+
+        // Resume AudioContext on user gesture
+        if (audioCtx && audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
+
+        // Load the wood sound buffer if not loaded yet
+        if (!woodBuffer) {
+          try {
+            woodBuffer = await loadSound('/sounds/wood.wav');
+          } catch (error) {
+            console.warn('Failed to load wood sound for mobile feedback:', error);
+          }
+        }
+
         if (swingService && !swingService.isRunning) {
           swingService.start().catch((error) => {
             console.warn('Could not start swing detection service:', error);
@@ -126,6 +155,7 @@ export const mobileOutline = {
         if (joinGroup) joinGroup.style.display = '';
         if (statusEl) statusEl.style.display = '';
         if (materialsGroup) materialsGroup.style.display = 'none';
+        if (statusPill) statusPill.style.display = '';
       });
 
       socket.on(SocketEvents.GAME_START, () => {
@@ -134,6 +164,7 @@ export const mobileOutline = {
         if (joinGroup) joinGroup.style.display = 'none';
         if (statusEl) statusEl.style.display = 'none';
         if (materialsGroup) materialsGroup.style.display = 'block';
+        if (statusPill) statusPill.style.display = 'none';
       });
     } catch (e) {
       // socket.io not available or other error
