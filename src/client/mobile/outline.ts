@@ -24,17 +24,36 @@ export const mobileOutline = {
       const swingService = Container.get(SwingDetectionService);
       let woodBuffer: AudioBuffer | null = null;
 
-      // Resume context on any click/touch on page as a general gesture fallback
-      document.body.addEventListener('click', () => {
+      // Robustly resume AudioContext on first user interaction gesture (click or tap)
+      const resumeAudio = () => {
         if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume().catch(() => {});
+          audioCtx.resume().then(() => {
+            console.log('AudioContext resumed successfully');
+            window.removeEventListener('click', resumeAudio);
+            window.removeEventListener('touchstart', resumeAudio);
+          }).catch((err) => console.warn('Failed to resume AudioContext:', err));
+        } else if (audioCtx && audioCtx.state === 'running') {
+          window.removeEventListener('click', resumeAudio);
+          window.removeEventListener('touchstart', resumeAudio);
         }
-      }, { once: true });
+      };
+      window.addEventListener('click', resumeAudio, { passive: true });
+      window.addEventListener('touchstart', resumeAudio, { passive: true });
+
+      // Pre-load wood sound immediately on page load
+      (async () => {
+        try {
+          woodBuffer = await loadSound('/sounds/wood.wav');
+          console.log('Mobile wood sound preloaded successfully');
+        } catch (error) {
+          console.warn('Failed to preload wood sound:', error);
+        }
+      })();
 
       swingService.setCallback((eventData) => {
         socket.emit(SocketEvents.HIT, eventData);
         if (woodBuffer) {
-          playSoundWithPitch(woodBuffer, 1.0, 0.05); // Play faint wood sound
+          playSoundWithPitch(woodBuffer, 1.0, 0.25); // Play faint wood sound (0.25 volume is audible on phone speakers)
         }
       });
 
@@ -89,16 +108,7 @@ export const mobileOutline = {
 
         // Resume AudioContext on user gesture
         if (audioCtx && audioCtx.state === 'suspended') {
-          await audioCtx.resume();
-        }
-
-        // Load the wood sound buffer if not loaded yet
-        if (!woodBuffer) {
-          try {
-            woodBuffer = await loadSound('/sounds/wood.wav');
-          } catch (error) {
-            console.warn('Failed to load wood sound for mobile feedback:', error);
-          }
+          await audioCtx.resume().catch(() => {});
         }
 
         if (swingService && !swingService.isRunning) {
