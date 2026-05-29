@@ -3,6 +3,7 @@ import { SwingDetectionService } from './services/swing-detection-service';
 import { ROOM_CODE_LENGTH, ROOM_CODE_REGEX, SocketEvents } from '../../shared/constants';
 import { loadSound, audioCtx } from '../pc/load-sound';
 import { playSoundWithPitch } from '../pc/play-sound';
+import { playMetalSound } from '../pc/metallic-sound';
 
 declare const io: any;
 
@@ -23,16 +24,23 @@ export const mobileOutline = {
 
       const swingService = Container.get(SwingDetectionService);
       let woodBuffer: AudioBuffer | null = null;
+      let plasticBuffer: AudioBuffer | null = null;
 
-      // Robustly resume AudioContext on first user interaction gesture (click or tap)
+      // Robustly resume AudioContext and request sensor permission on first user interaction gesture (click or tap)
       const resumeAudio = () => {
+        if (swingService && !swingService.isRunning) {
+          swingService.start().catch((err) => {
+            console.warn('Failed to start swing service on gesture:', err);
+            alert('Failed to start swing service: ' + (err instanceof Error ? err.message : err));
+          });
+        }
         if (audioCtx && audioCtx.state === 'suspended') {
           audioCtx.resume().then(() => {
             console.log('AudioContext resumed successfully');
             window.removeEventListener('click', resumeAudio);
             window.removeEventListener('touchstart', resumeAudio);
           }).catch((err) => console.warn('Failed to resume AudioContext:', err));
-        } else if (audioCtx && audioCtx.state === 'running') {
+        } else {
           window.removeEventListener('click', resumeAudio);
           window.removeEventListener('touchstart', resumeAudio);
         }
@@ -40,13 +48,15 @@ export const mobileOutline = {
       window.addEventListener('click', resumeAudio, { passive: true });
       window.addEventListener('touchstart', resumeAudio, { passive: true });
 
-      // Pre-load wood sound immediately on page load
+      // Pre-load wood and plastic sounds immediately on page load
       (async () => {
         try {
           woodBuffer = await loadSound('/sounds/wood.wav');
-          console.log('Mobile wood sound preloaded successfully');
+          plasticBuffer = await loadSound('/sounds/plastic.wav');
+          console.log('Mobile sound buffers preloaded successfully');
         } catch (error) {
-          console.warn('Failed to preload wood sound:', error);
+          console.warn('Failed to preload sound buffers:', error);
+          alert('Failed to preload sound buffers: ' + (error instanceof Error ? error.message : error));
         }
       })();
 
@@ -114,6 +124,7 @@ export const mobileOutline = {
         if (swingService && !swingService.isRunning) {
           swingService.start().catch((error) => {
             console.warn('Could not start swing detection service:', error);
+            alert('Could not start swing detection service: ' + (error instanceof Error ? error.message : error));
           });
         }
         setStatus('Joining...');
@@ -144,11 +155,31 @@ export const mobileOutline = {
           if (joinBtn) joinBtn.disabled = true;
           if (materialsGroup) materialsGroup.style.display = 'block';
 
-          // Wire material buttons to emit socket message
+          // Wire material buttons to emit socket message and play local audio feedback
           materialBtns.forEach((btn) => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
+              // Ensure audioCtx is resumed on click gesture
+              if (audioCtx && audioCtx.state === 'suspended') {
+                await audioCtx.resume().catch(() => {});
+              }
+              // Ensure swingService is started on click gesture
+              if (swingService && !swingService.isRunning) {
+                swingService.start().catch((err) => {
+                  console.warn('Could not start swing detection service on material select:', err);
+                  alert('Could not start swing detection service: ' + (err instanceof Error ? err.message : err));
+                });
+              }
               const material = btn.getAttribute('data-material');
               socket.emit(SocketEvents.MATERIAL_SELECT, { material });
+
+              // Play faint local audio feedback
+              if (material === 'wood' && woodBuffer) {
+                playSoundWithPitch(woodBuffer, 1.0, 0.25);
+              } else if (material === 'plastic' && plasticBuffer) {
+                playSoundWithPitch(plasticBuffer, 1.0, 0.25);
+              } else if (material === 'metal') {
+                playMetalSound(500, 0.25);
+              }
             });
           });
         } else { // 'error' (or any unexpected value)
@@ -179,6 +210,7 @@ export const mobileOutline = {
     } catch (e) {
       // socket.io not available or other error
       console.warn('Socket join not initialized', e);
+      alert('Socket join not initialized: ' + (e instanceof Error ? e.message : e));
     }
     // --- end socket join logic ---
   }

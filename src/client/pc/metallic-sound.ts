@@ -6,13 +6,13 @@ const metalAudioCtx = audioCtx || new (window.AudioContext || (window as any).we
  * Synthesizes a bare-bones metallic impact sound using additive sine wave synthesis.
  * @param {number} baseFreq - The fundamental pitch frequency (e.g., 400 for a deep chime, 800 for a sharp ring)
  */
-export function playMetalSound(baseFreq = 500): void {
+export function playMetalSound(baseFreq = 500, volume = 1.0): void {
   const now = metalAudioCtx.currentTime;
   const decay = 0.55; // Metallic rings linger longer than plastic
 
   // Non-harmonic frequency multipliers that create a cold, metallic, bell-like timbre
   const harmonics = [1, 2.7, 5.8, 8.1];
-  const volumes = [0.25, 0.12, 0.07, 0.04];
+  const volumes = [0.25 * volume, 0.12 * volume, 0.07 * volume, 0.04 * volume];
 
   harmonics.forEach((harmonic, index) => {
     const osc = metalAudioCtx.createOscillator();
