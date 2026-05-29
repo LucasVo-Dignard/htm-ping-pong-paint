@@ -6,7 +6,7 @@ import { audioCtx } from './load-sound';
  * @param {number} pitch - Pitch modifier (1.0 = normal, 2.0 = double pitch/speed, 0.5 = half)
  * @returns {Promise<void>}
  */
-export async function playSoundWithPitch(buffer: AudioBuffer | null, pitch = 1.0): Promise<void> {
+export async function playSoundWithPitch(buffer: AudioBuffer | null, pitch = 1.0, volume = 1.0): Promise<void> {
   if (!buffer) {
     return;
   }
@@ -18,7 +18,16 @@ export async function playSoundWithPitch(buffer: AudioBuffer | null, pitch = 1.0
   const source = audioCtx.createBufferSource();
   source.buffer = buffer;
   source.playbackRate.setValueAtTime(pitch, audioCtx.currentTime);
-  source.connect(audioCtx.destination);
+
+  if (volume !== 1.0) {
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+    source.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+  } else {
+    source.connect(audioCtx.destination);
+  }
+
   source.start(0);
 }
 
