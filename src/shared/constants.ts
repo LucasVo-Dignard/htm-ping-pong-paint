@@ -21,4 +21,5 @@ export enum SocketEvents {
   MATERIAL_SELECT = 'material_select',
   GAME_START = 'game_start',
   BALL_HIT = 'ball_hit',
+  HITTABLE_STATUS = 'hittable_status',
 }

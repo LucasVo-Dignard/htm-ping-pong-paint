@@ -111,8 +111,16 @@ export const mobileOutline = {
         }
       })();
 
+      let isBallHittable = false;
+
       swingService.setCallback((eventData) => {
         socket.emit(SocketEvents.HIT, eventData);
+        if (isBallHittable && woodBuffer) {
+          console.log('Mobile: Playing wood sound on swing gesture (ball is hittable)');
+          playSoundWithPitch(woodBuffer, 1.0, 1.0);
+        } else {
+          console.log('Mobile: Silent swing gesture (no ball in range)');
+        }
       });
 
       // helper: display a small status element in the card
@@ -243,16 +251,12 @@ export const mobileOutline = {
         if (statusPill) statusPill.style.display = 'none';
       });
 
-      socket.on(SocketEvents.BALL_HIT, () => {
-        console.log('Mobile: received BALL_HIT socket event. AudioContext state:', audioCtx ? audioCtx.state : 'undefined');
+      socket.on(SocketEvents.HITTABLE_STATUS, (status: boolean) => {
+        isBallHittable = status;
+        console.log('Mobile: received HITTABLE_STATUS:', status);
         const lastSocketEl = document.getElementById('debug-last-socket');
         if (lastSocketEl) {
-          lastSocketEl.textContent = `BALL_HIT at ${new Date().toLocaleTimeString()}`;
-        }
-        if (woodBuffer) {
-          playSoundWithPitch(woodBuffer, 1.0, 1.0);
-        } else {
-          console.warn('Mobile: received BALL_HIT but woodBuffer is not loaded!');
+          lastSocketEl.textContent = `Hittable: ${isBallHittable} at ${new Date().toLocaleTimeString()}`;
         }
       });
 

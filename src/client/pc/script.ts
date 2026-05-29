@@ -296,7 +296,7 @@ export function setBallCount(count: number): void {
     }
 }
 
-function getHittableBalls(): Ball[] {
+export function getHittableBalls(): Ball[] {
     return balls.filter(ball => ball.mesh.visible && !ball.isFlying && ball.physics.pos.z >= (BOARD_NEAR - HITTING_ZONE_DEPTH));
 }
 
