@@ -122,15 +122,6 @@ io.on(SocketEvents.CONNECTION, (socket: Socket) => {
     sessionService.emitGameStart(code);
   });
 
-  socket.on(SocketEvents.BALL_HIT, () => {
-    const code = socket.data.code;
-    console.log(`Server: Received BALL_HIT from PC socket for room: ${code}`);
-    if (!code) {
-      console.warn('Ball hit received from socket with no valid session');
-      return;
-    }
-    sessionService.emitBallHit(code);
-  });
 
   socket.on(SocketEvents.HITTABLE_STATUS, (status: boolean) => {
     const code = socket.data.code;

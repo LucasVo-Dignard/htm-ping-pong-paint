@@ -72,17 +72,7 @@ export class SessionService {
     }
   }
 
-  emitBallHit(code: string): void {
-    const session = this.sessions[code];
-    if (session) {
-      console.log(`Server: Broadcasting BALL_HIT to ${session.mobileSockets.length} mobile sockets in room ${code}`);
-      session.mobileSockets.forEach(mobileSocket => {
-        mobileSocket.emit(SocketEvents.BALL_HIT);
-      });
-    } else {
-      console.warn(`Server: emitBallHit failed — no session found for room: ${code}`);
-    }
-  }
+
 
   emitHittableStatus(code: string, status: boolean): void {
     const session = this.sessions[code];

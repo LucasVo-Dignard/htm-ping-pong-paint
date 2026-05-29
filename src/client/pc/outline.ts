@@ -186,7 +186,6 @@ if (startBtn) {
         plasticBuffer = await loadSound('/sounds/plastic.wav');
         (window as any).woodBuffer = woodBuffer;
         (window as any).plasticBuffer = plasticBuffer;
-        console.log('Sound buffers loaded on game start');
       } catch (error) {
         console.warn('Failed to load sound buffers:', error);
       }
@@ -202,10 +201,7 @@ if (startBtn) {
 
 socket.on(SocketEvents.HIT, (hitData: any) => {
   // Ignore hits until the game has started
-  if (!(window as any).gameStarted) {
-    console.log('Swing received but ignored: game not started');
-    return;
-  }
+  if (!(window as any).gameStarted) return;
   
   if (hitData && hitData.directionVector) {
     const accel = Math.abs(hitData.zAcceleration || 15);
@@ -222,13 +218,7 @@ socket.on(SocketEvents.HIT, (hitData: any) => {
     updateSwing(newSpeed, newAngleX, newAngleY);
 
     // Trigger the launch
-    console.log('PC: Swing received. Attempting launchBall...');
-    const hitSuccessful = launchBall();
-    console.log('PC: launchBall success status:', hitSuccessful);
-    if (hitSuccessful) {
-      console.log('PC: Emitting BALL_HIT event to server');
-      socket.emit(SocketEvents.BALL_HIT);
-    }
+    launchBall();
   }
 });
 
