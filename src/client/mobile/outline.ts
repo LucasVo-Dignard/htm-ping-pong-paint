@@ -1,4 +1,3 @@
-import { Container } from 'typedi';
 import { SwingDetectionService } from './services/swing-detection-service';
 import { ROOM_CODE_LENGTH, ROOM_CODE_REGEX, SocketEvents } from '../../shared/constants';
 import { loadSound, audioCtx } from '../pc/load-sound';
@@ -22,7 +21,7 @@ export const mobileOutline = {
       // register this client as "mobile"
       socket.emit(SocketEvents.REGISTER, 'mobile');
 
-      const swingService = Container.get(SwingDetectionService);
+      const swingService = new SwingDetectionService();
       let woodBuffer: AudioBuffer | null = null;
       let plasticBuffer: AudioBuffer | null = null;
 

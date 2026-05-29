@@ -1,4 +1,3 @@
-import { Service } from 'typedi';
 import { SWING_ACCELERATION_THRESHOLD, SWING_RESET_THRESHOLD, SWING_COOLDOWN_MS } from '../constants';
 
 interface SwingData {
@@ -10,7 +9,6 @@ interface SwingData {
   };
 }
 
-@Service()
 export class SwingDetectionService {
   private callback: ((data: SwingData) => void) | null;
   public isRunning: boolean;
