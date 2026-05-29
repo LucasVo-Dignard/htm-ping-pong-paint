@@ -1,10 +1,12 @@
+import { audioCtx } from './load-sound';
+
 /**
  * Plays an AudioBuffer with a dynamic pitch adjustment.
  * @param {AudioBuffer} buffer - The decoded audio data to play
  * @param {number} pitch - Pitch modifier (1.0 = normal, 2.0 = double pitch/speed, 0.5 = half)
  * @returns {Promise<void>}
  */
-async function playSoundWithPitch(buffer, pitch = 1.0) {
+export async function playSoundWithPitch(buffer: AudioBuffer | null, pitch = 1.0): Promise<void> {
   if (!buffer) {
     return;
   }
@@ -20,4 +22,4 @@ async function playSoundWithPitch(buffer, pitch = 1.0) {
   source.start(0);
 }
 
-window.playSoundWithPitch = playSoundWithPitch;
+(window as any).playSoundWithPitch = playSoundWithPitch;

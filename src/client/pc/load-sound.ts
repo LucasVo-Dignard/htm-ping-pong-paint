@@ -1,11 +1,12 @@
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const audioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+export const audioCtx = new audioContextClass();
 
 /**
  * Loads a sound from a server-hosted URL and decodes it into an AudioBuffer.
  * @param {string} url - URL string for hosted audio
  * @returns {Promise<AudioBuffer>}
  */
-async function loadSound(url) {
+export async function loadSound(url: string): Promise<AudioBuffer> {
   if (typeof url !== 'string') {
     throw new TypeError('loadSound expects a URL string');
   }
@@ -19,7 +20,6 @@ async function loadSound(url) {
   return audioCtx.decodeAudioData(arrayBuffer);
 }
 
-module.exports = {
-  audioCtx,
-  loadSound,
-};
+// Bind to window for global access compatibility
+(window as any).loadSound = loadSound;
+(window as any).audioCtx = audioCtx;

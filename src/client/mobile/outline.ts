@@ -1,7 +1,11 @@
-// Mobile outline script
-// This file defines the client-side structure and page behavior for the mobile version.
-const mobileOutline = {
-  init() {
+import { Container } from 'typedi';
+import { SwingDetectionService } from './services/swing-detection-service';
+import { ROOM_CODE_LENGTH, ROOM_CODE_REGEX, SocketEvents } from '../../shared/constants';
+
+declare const io: any;
+
+export const mobileOutline = {
+  init(): void {
     const root = document.getElementById('app');
     if (!root) return;
 
@@ -13,20 +17,16 @@ const mobileOutline = {
     try {
       const socket = io();
       // register this client as "mobile"
-      socket.emit('register', 'mobile');
+      socket.emit(SocketEvents.REGISTER, 'mobile');
 
-      const swingService = typeof SwingDetectionService !== 'undefined'
-        ? new SwingDetectionService()
-        : null;
+      const swingService = Container.get(SwingDetectionService);
 
-      if (swingService) {
-        swingService.setCallback((eventData) => {
-          socket.emit('hit', eventData);
-        });
-      }
+      swingService.setCallback((eventData) => {
+        socket.emit(SocketEvents.HIT, eventData);
+      });
 
       // helper: display a small status element in the card
-      let statusEl = card.querySelector('.join-status');
+      let statusEl = card.querySelector('.join-status') as HTMLDivElement | null;
       if (!statusEl) {
         statusEl = document.createElement('div');
         statusEl.className = 'join-status';
@@ -35,24 +35,27 @@ const mobileOutline = {
         card.appendChild(statusEl);
       }
 
-      function setStatus(text, ok) {
+      function setStatus(text: string, ok?: boolean) {
+        if (!statusEl) return;
         statusEl.textContent = text || '';
         statusEl.style.color = ok === false ? '#c0392b' : (ok === true ? '#16a085' : '');
       }
 
       // elements
-      const input = document.getElementById('code-input') || document.querySelector('input[name="code"]');
-      const joinBtn = document.getElementById('join-btn') || card.querySelector('button.join-btn');
+      const input = (document.getElementById('code-input') || document.querySelector('input[name="code"]')) as HTMLInputElement | null;
+      const joinBtn = (document.getElementById('join-btn') || card.querySelector('button.join-btn')) as HTMLButtonElement | null;
       const materialsGroup = document.getElementById('materials-group');
       const materialBtns = document.querySelectorAll('.material-btn');
+      const h1 = card.querySelector('h1') as HTMLElement | null;
+      const lead = card.querySelector('.lead') as HTMLElement | null;
+      const joinGroup = document.getElementById('join-group');
 
-
-      function validateRoomCode(value) {
-        return /^[A-Z]{4}$/.test(value);
+      function validateRoomCode(value: string): boolean {
+        return ROOM_CODE_REGEX.test(value);
       }
 
-      function normalizeInputValue(v) {
-        return (v || '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0,4);
+      function normalizeInputValue(v: string): string {
+        return (v || '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, ROOM_CODE_LENGTH);
       }
 
       // keep input normalized as user types
@@ -63,8 +66,8 @@ const mobileOutline = {
         });
       }
 
-      async function joinWithCode(c) {
-        const codeClean = normalizeInputValue(c || (input && input.value));
+      async function joinWithCode(c?: string): Promise<void> {
+        const codeClean = normalizeInputValue(c || (input ? input.value : ''));
         if (!validateRoomCode(codeClean)) {
           setStatus(codeClean.length === 0 ? 'Room code is required.' : 'Enter exactly 4 letters.', false);
           return;
@@ -75,7 +78,7 @@ const mobileOutline = {
           });
         }
         setStatus('Joining...');
-        socket.emit('join', codeClean);
+        socket.emit(SocketEvents.JOIN, codeClean);
       }
 
       // wire button
@@ -88,13 +91,13 @@ const mobileOutline = {
 
       // attempt auto-join from query param if present
       const params = new URLSearchParams(window.location.search);
-      const autoCode = normalizeInputValue(params.get('code'));
+      const autoCode = normalizeInputValue(params.get('code') || '');
       if (autoCode && validateRoomCode(autoCode)) {
         if (input) input.value = autoCode;
         joinWithCode(autoCode);
       }
 
-      socket.on('join_response', (status) => {
+      socket.on(SocketEvents.JOIN_RESPONSE, (status: string) => {
         // server returns either 'success' or 'error'
         if (status === 'success') {
           setStatus('Joined — waiting for game', true);
@@ -106,7 +109,7 @@ const mobileOutline = {
           materialBtns.forEach((btn) => {
             btn.addEventListener('click', () => {
               const material = btn.getAttribute('data-material');
-              socket.emit('material_select', { material });
+              socket.emit(SocketEvents.MATERIAL_SELECT, { material });
             });
           });
         } else { // 'error' (or any unexpected value)
@@ -114,10 +117,23 @@ const mobileOutline = {
         }
       });
 
-      socket.on('session_ended', () => {
+      socket.on(SocketEvents.SESSION_ENDED, () => {
         setStatus('Session ended', false);
         if (input) input.disabled = false;
         if (joinBtn) joinBtn.disabled = false;
+        if (h1) h1.style.display = '';
+        if (lead) lead.style.display = '';
+        if (joinGroup) joinGroup.style.display = '';
+        if (statusEl) statusEl.style.display = '';
+        if (materialsGroup) materialsGroup.style.display = 'none';
+      });
+
+      socket.on(SocketEvents.GAME_START, () => {
+        if (h1) h1.style.display = 'none';
+        if (lead) lead.style.display = 'none';
+        if (joinGroup) joinGroup.style.display = 'none';
+        if (statusEl) statusEl.style.display = 'none';
+        if (materialsGroup) materialsGroup.style.display = 'block';
       });
     } catch (e) {
       // socket.io not available or other error

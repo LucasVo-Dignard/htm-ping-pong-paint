@@ -1,14 +1,23 @@
 {
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "nodemon index.js"
+    "build": "node build.js",
+    "start": "node dist/server/index.js",
+    "dev": "node watch.js"
   },
   "dependencies": {
     "express": "^5.2.1",
-    "socket.io": "^4.8.3"
+    "reflect-metadata": "^0.2.2",
+    "socket.io": "^4.8.3",
+    "typedi": "^0.10.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
-    "nodemon": "^3.1.14"
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.1",
+    "@types/three": "^0.184.1",
+    "esbuild": "^0.28.0",
+    "nodemon": "^3.1.14",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
   }
 }

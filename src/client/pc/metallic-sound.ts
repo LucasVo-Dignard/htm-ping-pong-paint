@@ -1,11 +1,13 @@
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+import { audioCtx } from './load-sound';
+
+const metalAudioCtx = audioCtx || new (window.AudioContext || (window as any).webkitAudioContext)();
 
 /**
  * Synthesizes a bare-bones metallic impact sound using additive sine wave synthesis.
  * @param {number} baseFreq - The fundamental pitch frequency (e.g., 400 for a deep chime, 800 for a sharp ring)
  */
-function playMetalSound(baseFreq = 500) {
-  const now = audioCtx.currentTime;
+export function playMetalSound(baseFreq = 500): void {
+  const now = metalAudioCtx.currentTime;
   const decay = 0.55; // Metallic rings linger longer than plastic
 
   // Non-harmonic frequency multipliers that create a cold, metallic, bell-like timbre
@@ -13,8 +15,8 @@ function playMetalSound(baseFreq = 500) {
   const volumes = [0.25, 0.12, 0.07, 0.04];
 
   harmonics.forEach((harmonic, index) => {
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
+    const osc = metalAudioCtx.createOscillator();
+    const gainNode = metalAudioCtx.createGain();
 
     osc.type = 'sine';
     osc.frequency.setValueAtTime(baseFreq * harmonic, now);
@@ -25,13 +27,11 @@ function playMetalSound(baseFreq = 500) {
 
     // Route and trigger
     osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
+    gainNode.connect(metalAudioCtx.destination);
 
     osc.start(now);
     osc.stop(now + decay * 2);
   });
 }
 
-module.exports = {
-  playMetalSound,
-};
+(window as any).playMetalSound = playMetalSound;
