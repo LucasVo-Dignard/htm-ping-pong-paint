@@ -12,7 +12,6 @@ export async function loadSound(url: string): Promise<AudioBuffer> {
   }
 
   const absoluteUrl = new URL(url, window.location.href).href;
-  console.log(`Fetching sound from: ${absoluteUrl}`);
 
   let response: Response;
   try {
