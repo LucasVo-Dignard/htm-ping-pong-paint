@@ -202,31 +202,31 @@ if (startBtn) {
 
 socket.on(SocketEvents.HIT, (hitData: any) => {
   // Ignore hits until the game has started
-  if (!(window as any).gameStarted) return;
+  if (!(window as any).gameStarted) {
+    console.log('Swing received but ignored: game not started');
+    return;
+  }
   
   if (hitData && hitData.directionVector) {
-    // Map acceleration to speed input (adjust multiplier as needed)
     const accel = Math.abs(hitData.zAcceleration || 15);
     const newSpeed = Math.min(200, Math.floor(50 + (accel - 15) * 5));
 
-    // Map direction vector to angles
     const dir = hitData.directionVector;
     const isBackhand = (hitData.zAcceleration || 0) > 0;
     
-    // angleX: Horizontal angle (Rotation around Y axis)
-    // Backhand swings produce a smaller X component — boost to compensate
     const xMultiplier = isBackhand ? 70 : 45;
     const newAngleX = Math.floor(dir.x * xMultiplier);
 
-    // angleY: Vertical angle (Rotation around X axis)
-    // We can use z (Up) to determine the vertical angle
     const newAngleY = Math.floor(dir.z * 45);
 
     updateSwing(newSpeed, newAngleX, newAngleY);
 
     // Trigger the launch
+    console.log('PC: Swing received. Attempting launchBall...');
     const hitSuccessful = launchBall();
+    console.log('PC: launchBall success status:', hitSuccessful);
     if (hitSuccessful) {
+      console.log('PC: Emitting BALL_HIT event to server');
       socket.emit(SocketEvents.BALL_HIT);
     }
   }

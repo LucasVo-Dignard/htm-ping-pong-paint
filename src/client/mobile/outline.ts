@@ -45,6 +45,24 @@ export const mobileOutline = {
         }
       };
 
+      let keepAliveStarted = false;
+      const startKeepAlive = () => {
+        if (keepAliveStarted || !audioCtx) return;
+        try {
+          // Play a persistent silent oscillator to prevent iOS Safari from auto-suspending the audio thread
+          const keepAliveGain = audioCtx.createGain();
+          keepAliveGain.gain.setValueAtTime(0.000001, audioCtx.currentTime);
+          const keepAliveOsc = audioCtx.createOscillator();
+          keepAliveOsc.connect(keepAliveGain);
+          keepAliveGain.connect(audioCtx.destination);
+          keepAliveOsc.start(0);
+          keepAliveStarted = true;
+          console.log('Mobile: Audio keep-alive loop started successfully');
+        } catch (e) {
+          console.warn('Mobile: Failed to start audio keep-alive:', e);
+        }
+      };
+
       // Fully unlock Web Audio API synchronously inside user gesture
       const unlockAudio = () => {
         configureAudioSession();
@@ -59,9 +77,11 @@ export const mobileOutline = {
             source.buffer = buffer;
             source.connect(audioCtx.destination);
             source.start(0);
+            console.log('Mobile: Silent dummy buffer played successfully');
           } catch (e) {
-            console.warn('Failed to play silent dummy buffer:', e);
+            console.warn('Mobile: Failed to play silent dummy buffer:', e);
           }
+          startKeepAlive();
         }
       };
 
@@ -224,8 +244,11 @@ export const mobileOutline = {
       });
 
       socket.on(SocketEvents.BALL_HIT, () => {
+        console.log('Mobile: received BALL_HIT socket event. AudioContext state:', audioCtx ? audioCtx.state : 'undefined');
         if (woodBuffer) {
           playSoundWithPitch(woodBuffer, 1.0, 0.5);
+        } else {
+          console.warn('Mobile: received BALL_HIT but woodBuffer is not loaded!');
         }
       });
     } catch (e) {
