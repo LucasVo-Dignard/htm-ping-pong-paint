@@ -8,7 +8,6 @@ declare const io: any;
 
 export const mobileOutline = {
   init(): void {
-    alert('Mobile Lobby Initialized');
     // Set audio session type for iOS to bypass physical mute switch as early as possible
     if (typeof navigator !== 'undefined' && 'audioSession' in navigator) {
       try {
@@ -70,8 +69,7 @@ export const mobileOutline = {
       const resumeAudio = () => {
         if (swingService && !swingService.isRunning) {
           swingService.start().catch((err) => {
-            console.warn('Failed to start swing service on gesture:', err);
-            alert('Failed to start swing service: ' + (err instanceof Error ? err.message : err));
+            console.error('Failed to start swing service on gesture:', err);
           });
         }
         unlockAudio();
@@ -89,16 +87,12 @@ export const mobileOutline = {
           plasticBuffer = await loadSound('/sounds/plastic.wav' + cacheBuster);
           console.log('Mobile sound buffers preloaded successfully');
         } catch (error) {
-          console.warn('Failed to preload sound buffers:', error);
-          alert('Failed to preload sound buffers: ' + (error instanceof Error ? error.message : error));
+          console.error('Failed to preload sound buffers:', error);
         }
       })();
 
       swingService.setCallback((eventData) => {
         socket.emit(SocketEvents.HIT, eventData);
-        if (woodBuffer) {
-          playSoundWithPitch(woodBuffer, 1.0, 0.5); // Play faint wood sound (0.5 volume is audible on phone speakers)
-        }
       });
 
       // helper: display a small status element in the card
@@ -153,8 +147,7 @@ export const mobileOutline = {
         // Start swing detection synchronously inside user gesture turn (before any async yields!)
         if (swingService && !swingService.isRunning) {
           swingService.start().catch((error) => {
-            console.warn('Could not start swing detection service:', error);
-            alert('Could not start swing detection service: ' + (error instanceof Error ? error.message : error));
+            console.error('Could not start swing detection service:', error);
           });
         }
 
@@ -197,21 +190,11 @@ export const mobileOutline = {
               // Ensure swingService is started on click gesture
               if (swingService && !swingService.isRunning) {
                 swingService.start().catch((err) => {
-                  console.warn('Could not start swing detection service on material select:', err);
-                  alert('Could not start swing detection service: ' + (err instanceof Error ? err.message : err));
+                  console.error('Could not start swing detection service on material select:', err);
                 });
               }
               const material = btn.getAttribute('data-material');
               socket.emit(SocketEvents.MATERIAL_SELECT, { material });
-
-              // Play local audio feedback (volume increased to 0.5)
-              if (material === 'wood' && woodBuffer) {
-                playSoundWithPitch(woodBuffer, 1.0, 0.5);
-              } else if (material === 'plastic' && plasticBuffer) {
-                playSoundWithPitch(plasticBuffer, 1.0, 0.5);
-              } else if (material === 'metal') {
-                playMetalSound(500, 0.5);
-              }
             });
           });
         } else { // 'error' (or any unexpected value)
@@ -239,10 +222,15 @@ export const mobileOutline = {
         if (materialsGroup) materialsGroup.style.display = 'block';
         if (statusPill) statusPill.style.display = 'none';
       });
+
+      socket.on(SocketEvents.BALL_HIT, () => {
+        if (woodBuffer) {
+          playSoundWithPitch(woodBuffer, 1.0, 0.5);
+        }
+      });
     } catch (e) {
       // socket.io not available or other error
-      console.warn('Socket join not initialized', e);
-      alert('Socket join not initialized: ' + (e instanceof Error ? e.message : e));
+      console.error('Socket join not initialized:', e);
     }
     // --- end socket join logic ---
   }

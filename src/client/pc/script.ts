@@ -340,20 +340,20 @@ export function updateSwing(speed?: number, angleX?: number, angleY?: number): v
     if (angleY !== undefined) currentSwingAngleY = angleY;
 }
 
-export function launchBall(): void {
+export function launchBall(): boolean {
     if (!gameStarted) {
-        return;
+        return false;
     }
 
     const targetBall = chooseRandomHittableBall();
     if (!targetBall) {
-        return;
+        return false;
     }
 
-    if (!targetBall.mesh.visible) return;
+    if (!targetBall.mesh.visible) return false;
 
     if (targetBall.isFlying && targetBall.physics.pos.z < (BOARD_NEAR - HITTING_ZONE_DEPTH)) {
-        return;
+        return false;
     }
 
     const speed = (currentSwingSpeed || 10) * ballPhysics.swingAccelerationScale;
@@ -381,6 +381,7 @@ export function launchBall(): void {
             }
         }, 1000);
     }
+    return true;
 }
 
 function resetBall(ball: Ball): void {

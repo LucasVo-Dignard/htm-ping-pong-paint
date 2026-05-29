@@ -121,6 +121,15 @@ io.on(SocketEvents.CONNECTION, (socket: Socket) => {
     }
     sessionService.emitGameStart(code);
   });
+
+  socket.on(SocketEvents.BALL_HIT, () => {
+    const code = socket.data.code;
+    if (!code) {
+      console.warn('Ball hit received from socket with no valid session');
+      return;
+    }
+    sessionService.emitBallHit(code);
+  });
 });
 
 httpServer.listen(PORT, () => {
