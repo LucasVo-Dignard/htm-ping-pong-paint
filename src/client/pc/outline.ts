@@ -225,7 +225,10 @@ socket.on(SocketEvents.HIT, (hitData: any) => {
     updateSwing(newSpeed, newAngleX, newAngleY);
 
     // Trigger the launch
-    launchBall();
+    const hitSuccessful = launchBall();
+    if (hitSuccessful) {
+      socket.emit(SocketEvents.BALL_HIT);
+    }
   }
 });
 

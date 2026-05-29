@@ -71,4 +71,13 @@ export class SessionService {
       });
     }
   }
+
+  emitBallHit(code: string): void {
+    const session = this.sessions[code];
+    if (session) {
+      session.mobileSockets.forEach(mobileSocket => {
+        mobileSocket.emit(SocketEvents.BALL_HIT);
+      });
+    }
+  }
 }
