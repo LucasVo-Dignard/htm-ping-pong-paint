@@ -81,11 +81,12 @@ export const mobileOutline = {
       window.addEventListener('click', resumeAudio);
       window.addEventListener('touchstart', resumeAudio);
 
-      // Pre-load wood and plastic sounds immediately on page load
+      // Pre-load wood and plastic sounds immediately on page load with cache-busters
       (async () => {
         try {
-          woodBuffer = await loadSound('/sounds/wood.wav');
-          plasticBuffer = await loadSound('/sounds/plastic.wav');
+          const cacheBuster = '?v=' + Date.now();
+          woodBuffer = await loadSound('/sounds/wood.wav' + cacheBuster);
+          plasticBuffer = await loadSound('/sounds/plastic.wav' + cacheBuster);
           console.log('Mobile sound buffers preloaded successfully');
         } catch (error) {
           console.warn('Failed to preload sound buffers:', error);

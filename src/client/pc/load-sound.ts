@@ -11,13 +11,37 @@ export async function loadSound(url: string): Promise<AudioBuffer> {
     throw new TypeError('loadSound expects a URL string');
   }
 
-  const response = await fetch(url);
+  const absoluteUrl = new URL(url, window.location.href).href;
+  console.log(`Fetching sound from: ${absoluteUrl}`);
+
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch (fetchErr) {
+    const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+    throw new Error(`Fetch failed for ${absoluteUrl}: ${msg}`);
+  }
+
   if (!response.ok) {
-    throw new Error(`Failed to fetch audio file: ${response.status} ${response.statusText}`);
+    throw new Error(`Failed to fetch audio file from ${absoluteUrl}: ${response.status} ${response.statusText}`);
   }
 
   const arrayBuffer = await response.arrayBuffer();
-  return audioCtx.decodeAudioData(arrayBuffer);
+
+  return new Promise<AudioBuffer>((resolve, reject) => {
+    try {
+      const promise = audioCtx.decodeAudioData(
+        arrayBuffer,
+        (buffer) => resolve(buffer),
+        (err) => reject(err || new Error('decodeAudioData error callback triggered'))
+      );
+      if (promise && typeof promise.then === 'function') {
+        promise.then(resolve).catch(reject);
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
 }
 
 // Bind to window for global access compatibility
